@@ -1,0 +1,409 @@
+@model CorporacionRubio.Web.Models.LandingCatalogViewModel
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@{
+    ViewData["Title"] = "Corporación Rubio | Equipos de protección, herramientas y seguridad industrial";
+    var landingUserName = HttpContextAccessor.HttpContext?.Session.GetString("UserName");
+    var landingLogged = !string.IsNullOrEmpty(landingUserName) || User?.Identity?.IsAuthenticated == true;
+    var adminAccessUrl = User.IsInRole("Administrador") ? Url.Action("Index", "Dashboard")
+        : User.IsInRole("JefeLogistica") ? Url.Action("Index", "PanelLogistico")
+        : User.IsInRole("Ventas") ? Url.Action("Index", "PanelVentas")
+        : User.IsInRole("Cliente") ? Url.Action("Index", "PortalCliente")
+        : Url.Action("Acceso", "Account");
+    var adminAccessText = User.IsInRole("Administrador") ? "Volver al panel administrativo"
+        : User.IsInRole("JefeLogistica") ? "Volver al panel logístico"
+        : User.IsInRole("Ventas") ? "Volver al panel comercial"
+        : User.IsInRole("Cliente") ? "Volver al portal cliente"
+        : "Ingresar al sistema";
+
+    var productos = Model.Productos;
+    var filtros = productos
+        .Select(p => CategoryKey((p.Categoria?.Nombre ?? "") + " " + p.Nombre + " " + (p.Descripcion ?? "")))
+        .Distinct()
+        .OrderBy(k => k == "epp" ? 0 : k == "herramientas" ? 1 : k == "seguridad" ? 2 : k == "mineria" ? 3 : 4)
+        .ToList();
+}
+
+<section class="official-hero official-hero-clean rounded-5 overflow-hidden shadow-lg mb-5" id="inicio">
+    <div class="row g-0 align-items-stretch position-relative">
+        <div class="col-lg-7 p-4 p-md-5">
+            <span class="official-badge badge-light mb-3">
+                <i class="bi bi-shield-check me-2"></i> Atención industrial y suministro corporativo
+            </span>
+            <h1 class="display-5 fw-black mb-3 text-hero-dark">
+                Equipos de protección personal, herramientas y señalización para operaciones seguras.
+            </h1>
+            <p class="lead text-slate mb-4">
+                Soluciones para empresas que requieren disponibilidad, precios referenciales y atención comercial rápida en equipos de protección, seguridad vial, herramientas y productos para operaciones industriales.
+            </p>
+            <div class="d-flex flex-column flex-sm-row gap-3 mb-4">
+                <a class="btn btn-warning btn-lg rounded-pill px-4 fw-bold text-dark" href="#catalogo">
+                    <i class="bi bi-bag-check me-2"></i> Consultar catálogo comercial
+                </a>
+                <a class="btn btn-outline-dark btn-lg rounded-pill px-4" href="https://wa.me/51915947514?text=Hola%20Corporaci%C3%B3n%20Rubio%2C%20quiero%20recibir%20asesor%C3%ADa%20sobre%20EPP%20y%20seguridad%20industrial" target="_blank" rel="noopener">
+                    <i class="bi bi-whatsapp me-2"></i> Contactar a ventas
+                </a>
+            </div>
+            <div class="row g-3">
+                <div class="col-6 col-md-4">
+                    <div class="official-metric metric-light">
+                        <strong>@productos.Count</strong>
+                        <span>Productos en catálogo</span>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4">
+                    <div class="official-metric metric-light">
+                        <strong>@Model.StockTotal.ToString("N0")</strong>
+                        <span>Unidades disponibles</span>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4">
+                    <div class="official-metric metric-light">
+                        <strong>S/ @Model.ValorCatalogo.ToString("N0")</strong>
+                        <span>Valor referencial</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5 official-hero-panel-light p-4 p-md-5">
+            <div class="quote-card mb-3">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="quote-icon"><i class="bi bi-headset"></i></div>
+                    <div>
+                        <h5 class="mb-0 fw-bold">Contactar a ventas</h5>
+                        <small class="text-muted">Asesoría para compras empresariales y pedidos por volumen</small>
+                    </div>
+                </div>
+                <a class="contact-row text-decoration-none" href="tel:+51915947514"><i class="bi bi-telephone-fill"></i><span>915947514 / 958716171</span></a>
+                <a class="contact-row text-decoration-none" href="mailto:ventas@corporacionrubio.com?subject=Compra%20Corporación%20Rubio"><i class="bi bi-envelope-fill"></i><span>ventas@corporacionrubio.com</span></a>
+                <a class="contact-row text-decoration-none" href="#catalogo"><i class="bi bi-tags-fill"></i><span>Disponibilidad, compra y validación de pago</span></a>
+            </div>
+            <div class="quick-catalog-card">
+                <h6 class="fw-bold mb-3 text-uppercase text-muted">Líneas de atención</h6>
+                <a href="#catalogo" class="quick-chip js-quick-filter" data-filter="epp" data-search="casco botas guantes lentes respirador"><i class="bi bi-shield-check"></i> Protección personal</a>
+                <a href="#catalogo" class="quick-chip js-quick-filter" data-filter="herramientas" data-search="compresora wincha martillo alicate"><i class="bi bi-tools"></i> Herramientas industriales</a>
+                <a href="#catalogo" class="quick-chip js-quick-filter" data-filter="seguridad" data-search="cono cinta señalizacion chaleco"><i class="bi bi-cone-striped"></i> Señalización y seguridad vial</a>
+                <a href="#catalogo" class="quick-chip js-quick-filter" data-filter="mineria" data-search="lampara minera arnes brocas"><i class="bi bi-gem"></i> Operaciones mineras</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="service-strip rounded-4 shadow-sm mb-5">
+    <div class="row g-0 text-center">
+        <div class="col-md-3 service-item"><i class="bi bi-currency-dollar"></i><strong>Precios referenciales</strong><span>para evaluación comercial</span></div>
+        <div class="col-md-3 service-item"><i class="bi bi-box-seam-fill"></i><strong>Disponibilidad operativa</strong><span>según atención interna</span></div>
+        <div class="col-md-3 service-item"><i class="bi bi-people-fill"></i><strong>Atención coordinada</strong><span>ventas y logística integradas</span></div>
+        <div class="col-md-3 service-item"><i class="bi bi-truck-front-fill"></i><strong>Cobertura de atención nacional</strong><span>despachos según disponibilidad</span></div>
+    </div>
+</section>
+
+<section id="nosotros" class="mb-5">
+    <div class="row align-items-center g-4">
+        <div class="col-lg-5">
+            <span class="section-kicker">Nosotros</span>
+            <h2 class="fw-bold mb-3">Suministro especializado para seguridad ocupacional, construcción e industria.</h2>
+            <p class="text-muted mb-3">
+                Corporación Rubio S.R.L. atiende a empresas que necesitan productos de seguridad industrial, equipos de protección personal, calzado de seguridad, protección respiratoria, señalización y herramientas para obra.
+            </p>
+            <p class="text-muted mb-4">
+                La propuesta digital mejora la atención comercial al centralizar catálogo, disponibilidad, solicitudes, seguimiento de pedidos y coordinación interna entre ventas y logística.
+            </p>
+            <a class="btn btn-dark rounded-pill px-4" href="#contacto"><i class="bi bi-send me-2"></i> Solicitar asesoría comercial</a>
+        </div>
+        <div class="col-lg-7">
+            <div class="row g-3">
+                <div class="col-md-6"><div class="benefit-card h-100"><i class="bi bi-database-check"></i><h5>Catálogo centralizado</h5><p>La información comercial se actualiza desde un único registro de productos, evitando duplicidad y errores de atención.</p></div></div>
+                <div class="col-md-6"><div class="benefit-card h-100"><i class="bi bi-cart-check"></i><h5>Atención comercial eficiente</h5><p>El área comercial puede validar disponibilidad y precios referenciales antes de confirmar una solicitud.</p></div></div>
+                <div class="col-md-6"><div class="benefit-card h-100"><i class="bi bi-clipboard2-check"></i><h5>Control de disponibilidad</h5><p>La disponibilidad se gestiona desde inventario para mejorar la planificación de despacho.</p></div></div>
+                <div class="col-md-6"><div class="benefit-card h-100"><i class="bi bi-person-badge"></i><h5>Seguimiento para clientes</h5><p>Los clientes pueden registrar requerimientos y consultar el avance de atención desde un entorno ordenado.</p></div></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="catalogo" class="mb-5">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4">
+        <div>
+            <span class="section-kicker">Catálogo corporativo</span>
+            <h2 class="fw-bold mb-2">Productos para compra empresarial</h2>
+            <p class="text-muted mb-0">Listado de productos disponibles para consulta, compra web y validación comercial. Los precios y stock publicados sirven como referencia antes de registrar el pago y confirmar el despacho.</p>
+        </div>
+        <div class="catalog-search shadow-sm">
+            <i class="bi bi-search"></i>
+            <input id="catalogSearch" type="text" placeholder="Buscar producto, línea o aplicación..." autocomplete="off" />
+        </div>
+    </div>
+
+    <div class="catalog-tabs mb-4">
+        <button class="catalog-filter active" data-filter="all">Todo</button>
+        @foreach (var filtro in filtros)
+        {
+            <button class="catalog-filter" data-filter="@filtro">@FilterLabel(filtro)</button>
+        }
+    </div>
+
+    @if (!productos.Any())
+    {
+        <div class="alert alert-warning rounded-4 shadow-sm">
+            Actualmente no hay productos disponibles para publicación comercial. El área responsable puede actualizar el catálogo desde el módulo de inventario.
+        </div>
+    }
+    else
+    {
+        <div class="row g-4" id="catalogGrid">
+            @foreach (var p in productos)
+            {
+                var categoria = p.Categoria?.Nombre ?? "Sin categoría";
+                var proveedor = p.Proveedor?.NombreEmpresa ?? "Corporación Rubio";
+                var precio = p.PrecioUnitario ?? 0m;
+                var stock = p.StockActual ?? 0;
+                var categoryKey = CategoryKey(categoria + " " + p.Nombre + " " + (p.Descripcion ?? ""));
+                var searchText = $"{p.Nombre} {categoria} {proveedor} {p.Descripcion}";
+                var whatsappText = $"Hola Corporación Rubio, quiero solicitar información del producto: {p.Nombre}. Precio publicado: S/ {precio:N2}. Stock referencial: {stock} unidades.";
+                var whatsappUrl = $"https://wa.me/51915947514?text={System.Uri.EscapeDataString(whatsappText)}";
+                var stockCss = stock <= 10 ? "stock-low" : string.Empty;
+                <div class="col-md-6 col-xl-3 catalog-item" data-category="@categoryKey" data-name="@searchText">
+                    <div class="product-line-card product-card-priced h-100">
+                        <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+                            <div class="product-icon @IconClass(categoryKey)"><i class="@IconFor(categoryKey)"></i></div>
+                            <span class="stock-pill @stockCss">Stock: @stock</span>
+                        </div>
+                        <span class="product-category">@categoria</span>
+                        <h5>@p.Nombre</h5>
+                        <p>@(string.IsNullOrWhiteSpace(p.Descripcion) ? "Producto disponible para evaluación comercial y atención según disponibilidad." : p.Descripcion)</p>
+                        <div class="product-price-box">
+                            <small>Precio unitario</small>
+                            <strong>S/ @precio.ToString("N2")</strong>
+                        </div>
+                        <div class="product-provider"><i class="bi bi-building"></i> @proveedor</div>
+                        <div class="d-grid gap-2 mt-3">
+                            @if (User.IsInRole("Cliente"))
+                            {
+                                <a class="btn btn-warning rounded-pill fw-bold text-dark" href="@(Url.Action("Index", "PortalCliente"))#solicitud"><i class="bi bi-credit-card-2-front me-1"></i> Comprar desde mi portal</a>
+                            }
+                            else
+                            {
+                                <a href="#ventas" class="btn btn-warning rounded-pill fw-bold text-dark quote-product-link" data-product="@p.Nombre">
+                                    <i class="bi bi-credit-card-2-front me-1"></i> Comprar en la web
+                                </a>
+                                <a href="@whatsappUrl" target="_blank" rel="noopener" class="btn btn-outline-dark rounded-pill fw-bold small">
+                                    <i class="bi bi-whatsapp me-1"></i> WhatsApp urgente
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</section>
+
+<section id="ventas" class="quote-section quote-section-light quote-request-panel quote-enterprise-panel rounded-5 p-4 p-md-5 mb-5 shadow-lg">
+    <div class="row align-items-center g-4">
+        <div class="col-lg-7">
+            <span class="section-kicker quote-kicker"><i class="bi bi-lightning-charge-fill me-2"></i> Atención comercial para empresas</span>
+            <h2 class="quote-title mb-3">Compra o solicita validación comercial desde el portal web antes de usar canales externos.</h2>
+            <p class="quote-description mb-4">
+                Usa el portal web como canal principal: selecciona productos, registra el pago referencial y permite que Ventas valide la operación antes de derivarla a logística. WhatsApp queda solo como soporte urgente.
+            </p>
+            <div class="quote-benefits">
+                <div><i class="bi bi-check2-circle"></i><span>Registro web de compra y comprobante de pago</span></div>
+                <div><i class="bi bi-check2-circle"></i><span>Validación del pago antes de comprometer stock</span></div>
+                <div><i class="bi bi-check2-circle"></i><span>Coordinación entre ventas y logística hasta la entrega</span></div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="quote-actions quote-form-card rounded-4 p-4">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="quote-form-icon"><i class="bi bi-clipboard2-check"></i></div>
+                    <div>
+                        <h5 class="fw-black mb-0 text-dark">Compra web con validación</h5>
+                        <small class="text-muted">Complete el producto, cantidad y continúe al portal para registrar el pago</small>
+                    </div>
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-12"><input id="quoteProduct" class="form-control" placeholder="Producto o línea de interés" autocomplete="off" /></div>
+                    <div class="col-6"><input id="quoteQuantity" class="form-control" placeholder="Cantidad requerida" autocomplete="off" /></div>
+                    <div class="col-6"><input id="quoteCity" class="form-control" placeholder="Ciudad de entrega" autocomplete="off" /></div>
+                </div>
+                @if (User.IsInRole("Cliente"))
+                {
+                    <a id="btnQuoteWeb" class="btn btn-warning w-100 rounded-pill fw-bold text-dark mb-3" href="@Url.Action("Index", "PortalCliente")#solicitud">
+                        <i class="bi bi-send-check me-2"></i> Registrar compra en mi portal
+                    </a>
+                }
+                else
+                {
+                    <a id="btnQuoteWeb" class="btn btn-warning w-100 rounded-pill fw-bold text-dark mb-3" href="@Url.Action("Acceso", "Account")">
+                        <i class="bi bi-box-arrow-in-right me-2"></i> Ingresar y comprar en la web
+                    </a>
+                }
+                <button type="button" id="btnQuoteWhatsapp" class="btn btn-outline-success w-100 rounded-pill fw-bold mb-3">
+                    <i class="bi bi-whatsapp me-2"></i> WhatsApp solo para atención urgente
+                </button>
+                <a class="btn btn-outline-dark w-100 rounded-pill fw-bold mb-3" href="mailto:ventas@corporacionrubio.com?subject=Solicitud%20comercial%20Corporación%20Rubio"><i class="bi bi-envelope me-2"></i> Enviar consulta por correo</a>
+                <a class="btn btn-outline-primary w-100 rounded-pill fw-bold" href="tel:+51915947514"><i class="bi bi-telephone me-2"></i> Llamar al área comercial</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="contacto" class="mb-5">
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <span class="section-kicker">Contacto</span>
+            <h2 class="fw-bold mb-3">Atención comercial para empresas, obras y operaciones industriales.</h2>
+            <p class="text-muted">El equipo de ventas puede orientar la selección de productos, validar disponibilidad y coordinar condiciones de entrega según el requerimiento de cada empresa.</p>
+            <div class="contact-card shadow-sm">
+                <a href="tel:+51915947514"><i class="bi bi-telephone-fill"></i><strong>Teléfonos</strong><span>915947514 / 958716171</span></a>
+                <a href="mailto:ventas@corporacionrubio.com?subject=Consulta%20Corporación%20Rubio"><i class="bi bi-envelope-fill"></i><strong>Correo</strong><span>ventas@corporacionrubio.com</span></a>
+                <a href="#ventas"><i class="bi bi-globe-americas"></i><strong>Cobertura de atención</strong><span>Despachos nacionales según coordinación</span></a>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="admin-card rounded-5 p-4 p-md-5 h-100">
+                <span class="section-kicker">Acceso corporativo</span>
+                <h3 class="fw-bold mb-3">Sistema interno para gestión comercial y logística.</h3>
+                <p class="text-muted mb-4">Personal autorizado puede ingresar al entorno interno para gestionar inventario, solicitudes comerciales, pedidos, trazabilidad y seguridad de usuarios según su perfil.</p>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6"><a class="admin-mini" href="@adminAccessUrl"><i class="bi bi-speedometer2"></i> Ingresar al panel asignado</a></div>
+                    <div class="col-md-6"><a class="admin-mini" href="@adminAccessUrl"><i class="bi bi-box-seam"></i> Gestión de catálogo e inventario</a></div>
+                    <div class="col-md-6"><a class="admin-mini" href="@adminAccessUrl"><i class="bi bi-cart-check"></i> Atención de pedidos</a></div>
+                    <div class="col-md-6"><a class="admin-mini" href="@(Url.Action("Acceso", "Account"))"><i class="bi bi-person-lock"></i> Seguridad y accesos</a></div>
+                </div>
+                <a class="btn btn-dark rounded-pill px-4 fw-bold" href="@adminAccessUrl"><i class="bi bi-speedometer2 me-2"></i> @adminAccessText</a>
+                @if (!landingLogged)
+                {
+                    <p class="small text-muted mt-3 mb-0">Credenciales de evaluación disponibles para sustentación: Administrador, Logística, Ventas y Cliente.</p>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        (function () {
+            const searchInput = document.getElementById('catalogSearch');
+            const filters = document.querySelectorAll('.catalog-filter');
+            const items = document.querySelectorAll('.catalog-item');
+            let activeFilter = 'all';
+
+            function normalize(value) {
+                return (value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            }
+
+            function applyFilters() {
+                const term = normalize(searchInput?.value || '');
+                items.forEach(item => {
+                    const categories = normalize(item.dataset.category);
+                    const name = normalize((item.dataset.name || '') + ' ' + item.innerText);
+                    const matchesFilter = activeFilter === 'all' || categories.includes(activeFilter);
+                    const matchesSearch = !term || name.includes(term);
+                    item.classList.toggle('d-none', !(matchesFilter && matchesSearch));
+                });
+            }
+
+            filters.forEach(button => {
+                button.addEventListener('click', () => {
+                    filters.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    activeFilter = button.dataset.filter;
+                    applyFilters();
+                });
+            });
+
+            if (searchInput) searchInput.addEventListener('input', applyFilters);
+
+            document.querySelectorAll('.js-quick-filter').forEach(link => {
+                link.addEventListener('click', () => {
+                    const filter = link.dataset.filter || 'all';
+                    const search = link.dataset.search || '';
+                    const targetButton = Array.from(filters).find(btn => btn.dataset.filter === filter) || filters[0];
+                    filters.forEach(btn => btn.classList.remove('active'));
+                    targetButton.classList.add('active');
+                    activeFilter = filter;
+                    if (searchInput) searchInput.value = search;
+                    applyFilters();
+                });
+            });
+
+            document.querySelectorAll('.quote-product-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    const input = document.getElementById('quoteProduct');
+                    if (input && link.dataset.product) input.value = link.dataset.product;
+                });
+            });
+
+            const quoteWebButton = document.getElementById('btnQuoteWeb');
+            if (quoteWebButton) {
+                quoteWebButton.addEventListener('click', () => {
+                    const product = document.getElementById('quoteProduct')?.value?.trim() || '';
+                    const quantity = document.getElementById('quoteQuantity')?.value?.trim() || '';
+                    const city = document.getElementById('quoteCity')?.value?.trim() || '';
+                    sessionStorage.setItem('rubio_consulta_web', JSON.stringify({ product, quantity, city, fecha: new Date().toISOString() }));
+                });
+            }
+
+            const quoteButton = document.getElementById('btnQuoteWhatsapp');
+            if (quoteButton) {
+                quoteButton.addEventListener('click', () => {
+                    const product = document.getElementById('quoteProduct')?.value?.trim() || 'productos de seguridad industrial';
+                    const quantity = document.getElementById('quoteQuantity')?.value?.trim() || 'cantidad por confirmar';
+                    const city = document.getElementById('quoteCity')?.value?.trim() || 'ciudad de entrega por confirmar';
+                    const message = `Hola Corporación Rubio, necesito soporte urgente sobre una compra web para: ${product}. Cantidad requerida: ${quantity}. Ciudad de entrega: ${city}.`;
+                    window.open(`https://wa.me/51915947514?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
+                });
+            }
+        })();
+    </script>
+}
+
+@functions {
+    public string CategoryKey(string value)
+    {
+        var text = (value ?? string.Empty).ToLowerInvariant();
+        if (text.Contains("herramienta") || text.Contains("wincha") || text.Contains("alicate") || text.Contains("martillo") || text.Contains("compresora") || text.Contains("gata") || text.Contains("material") || text.Contains("constru") || text.Contains("cemento") || text.Contains("ladrillo")) return "herramientas";
+        if (text.Contains("mineria") || text.Contains("minería") || text.Contains("minera") || text.Contains("broca")) return "mineria";
+        if (text.Contains("bio") || text.Contains("desinfe") || text.Contains("fumig")) return "bioseguridad";
+        if (text.Contains("vial") || text.Contains("señal") || text.Contains("senal") || text.Contains("cono") || text.Contains("cinta")) return "seguridad";
+        return "epp";
+    }
+
+    public string FilterLabel(string key)
+    {
+        return key switch
+        {
+            "epp" => "EPP",
+            "herramientas" => "Herramientas industriales",
+            "seguridad" => "Señalización y seguridad vial",
+            "mineria" => "Operaciones mineras",
+            "bioseguridad" => "Bioseguridad",
+            _ => "Otros"
+        };
+    }
+
+    public string IconFor(string key)
+    {
+        return key switch
+        {
+            "herramientas" => "bi bi-tools",
+            "seguridad" => "bi bi-cone-striped",
+            "mineria" => "bi bi-gem",
+            "bioseguridad" => "bi bi-virus2",
+            _ => "bi bi-shield-check"
+        };
+    }
+
+    public string IconClass(string key)
+    {
+        return key switch
+        {
+            "herramientas" => "bg-primary-subtle text-primary",
+            "seguridad" => "bg-warning-subtle text-warning-emphasis",
+            "mineria" => "bg-dark-subtle text-dark",
+            "bioseguridad" => "bg-success-subtle text-success",
+            _ => "bg-info-subtle text-info"
+        };
+    }
+}

@@ -1,0 +1,163 @@
+PROYECTO FINAL - CORPORACIÓN RUBIO
+ASP.NET Core MVC + Entity Framework Core + SQL Server + ASP.NET Core Identity
+
+1. APERTURA DEL PROYECTO
+- Abrir el archivo CorporacionRubio.LogisticaYVentas.sln en Visual Studio.
+- Colocar como proyecto de inicio: CorporacionRubio.Web.
+- Revisar la cadena de conexión en CorporacionRubio.Web/appsettings.json.
+
+2. BASE DE DATOS Y MIGRACIONES
+El proyecto contiene DbContext, entidades y migraciones de Entity Framework Core.
+Comando recomendado en Package Manager Console:
+
+Update-Database
+
+Si ya se ejecutó antes el script SQL bd_diars.sql, la aplicación puede trabajar sobre esa base existente. Además, al iniciar la app verifica y crea las tablas de ASP.NET Core Identity si faltan.
+
+3. ELEMENTOS DEL PDF IMPLEMENTADOS
+- Paquetes NuGet de Entity Framework Core, SQL Server, Tools, Design e Identity.
+- Cadena de conexión en appsettings.json.
+- RubioDbContext basado en IdentityDbContext<ApplicationUser>.
+- ApplicationUser personalizado con nombres, apellidos, cargo, área, ciudad, país, estado y fecha de registro.
+- AddIdentity<ApplicationUser, IdentityRole> en Program.cs.
+- AddEntityFrameworkStores<RubioDbContext>().
+- AddDefaultTokenProviders().
+- app.UseAuthentication() antes de app.UseAuthorization().
+- Registro de usuarios con UserManager.
+- Login y logout con SignInManager.
+- Gestión de roles con RoleManager.
+- Roles base: Administrador, JefeLogistica, Ventas y Cliente.
+- Rutas protegidas con [Authorize] y política PanelAdministrativo.
+- Recuperación de contraseña con token de Identity.
+- Restablecimiento de cuenta administradora.
+- Confirmación/habilitación de cuentas desde el módulo Seguridad.
+
+4. USUARIOS DEMO
+Al iniciar la aplicación se crean/validan los siguientes usuarios:
+
+Administrador:
+Correo: admin@rubio.com
+Clave: 123456
+Rol: Administrador
+
+Jefe de logística:
+Correo: logistica@rubio.com
+Clave: 123456
+Rol: JefeLogistica
+
+Ventas:
+Correo: ventas@rubio.com
+Clave: 123456
+Rol: Ventas
+
+Cliente:
+Correo: cliente@rubio.com
+Clave: 123456
+Rol: Cliente
+
+5. FLUJO DE PRUEBA
+- Ejecutar CorporacionRubio.Web.
+- Entrar a la página oficial.
+- Presionar Admin.
+- Iniciar sesión con admin@rubio.com / 123456.
+- Probar Dashboard.
+- Probar Inventario.
+- Probar Pedidos.
+- Probar Auditoría.
+- Entrar a Seguridad y accesos.
+- Crear un usuario.
+- Cambiar rol a un usuario.
+- Restablecer contraseña de un usuario.
+- Activar/desactivar cuenta.
+- Restablecer cuenta admin.
+- Probar "Olvidé mi contraseña" desde el login.
+
+6. RESTABLECER ADMIN DESDE LOGIN
+Si se pierde el acceso del administrador:
+- En el login presionar "Restablecer admin".
+- Código académico: RUBIO-2026.
+- Nueva clave sugerida: 123456.
+
+7. FUNCIONALIDADES DEL SISTEMA
+Página oficial:
+- Presentación comercial de Corporación Rubio.
+- Catálogo con filtros y buscador.
+- Cotización por WhatsApp.
+- Contacto por correo y llamada.
+
+Dashboard:
+- Indicadores reales desde SQL Server.
+- Acceso a inventario, pedidos, auditoría y seguridad.
+
+Inventario:
+- Crear, editar y eliminar productos.
+- Crear categorías y proveedores.
+- Registrar ingresos y salidas.
+- Validar stock insuficiente.
+
+Pedidos:
+- Crear pedido con productos.
+- Descontar stock automáticamente.
+- Generar movimientos de salida.
+- Ver detalle de pedido.
+- Cambiar estado del pedido.
+
+Auditoría:
+- Ver bitácora de operaciones.
+- Mostrar área afectada, actividad realizada, usuario, fecha y detalles.
+
+Seguridad:
+- Login seguro.
+- Registro con UserManager.
+- Roles con RoleManager.
+- Recuperación con token.
+- Restablecimiento de admin.
+- Autorización por roles.
+
+NOTA:
+El módulo Identity cumple el enfoque del caso práctico del PDF: autenticación, autorización, roles, sesiones seguras, DbContext, migraciones, token providers y rutas protegidas en ASP.NET Core MVC.
+
+============================================================
+ACTUALIZACIÓN: PANELES POR ROL
+============================================================
+Después del login, el sistema redirige automáticamente según el rol de ASP.NET Core Identity:
+
+- admin@rubio.com / 123456 -> Panel administrativo general
+- logistica@rubio.com / 123456 -> Panel logístico
+- ventas@rubio.com / 123456 -> Panel comercial
+- cliente@rubio.com / 123456 -> Portal cliente
+
+El menú superior también cambia según el perfil autenticado. De esta forma, un usuario de Ventas o Cliente ya no visualiza módulos administrativos restringidos; cada perfil tiene su propio espacio de trabajo.
+
+Rutas principales:
+- /Dashboard -> Administrador
+- /PanelLogistico -> Administrador y JefeLogistica
+- /PanelVentas -> Administrador y Ventas
+- /PortalCliente -> Administrador y Cliente
+- /Inventario -> Administrador y JefeLogistica
+- /Pedidos -> Administrador, Ventas y JefeLogistica
+- /Seguridad -> Administrador
+
+ACTUALIZACIÓN CATÁLOGO PÚBLICO / ROLES
+--------------------------------------
+La página principal ya no usa tarjetas estáticas. El catálogo público lee los productos desde la tabla Producto mediante Entity Framework Core.
+Por eso los productos que ve el visitante son los mismos que usan:
+- Panel logístico
+- Panel comercial
+- Portal cliente
+- Inventario administrativo
+
+Al iniciar la aplicación, Program.cs ejecuta SeedCatalogoCorporativoAsync para asegurar productos corporativos de EPP, herramientas, seguridad vial, minería y bioseguridad con precio unitario y stock.
+Si la base ya existe, no es necesario borrar nada. El sistema agrega o actualiza productos base si faltan.
+También se incluye el script opcional scripts/04_catalogo_productos_corporativos.sql como respaldo académico.
+
+ACTUALIZACIÓN: SEPARACIÓN INTERNA DE MÓDULOS
+--------------------------------------------
+El proyecto ahora tiene una separación funcional más clara dentro del mismo ASP.NET Core MVC:
+- Página pública comercial.
+- Centro administrativo exclusivo para Administrador.
+- Operación logística y ventas.
+- Portales por rol: Logística, Ventas y Cliente.
+- Seguridad administrativa y auditoría.
+
+El administrador ya no entra directamente al dashboard operativo; ahora entra al Centro administrativo, desde donde puede ir a Operación, Seguridad o Portales por rol.

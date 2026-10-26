@@ -1,0 +1,251 @@
+@model IEnumerable<CorporacionRubio.Data.Entities.Auditoria>
+@{
+    ViewData["Title"] = "Bitácora del Sistema";
+    var logs = Model?.ToList() ?? new List<CorporacionRubio.Data.Entities.Auditoria>();
+    var totalRegistros = logs.Count;
+    var totalActualizaciones = logs.Count(x => (x.Accion ?? "").Contains("UPDATE", StringComparison.OrdinalIgnoreCase));
+    var totalInventario = logs.Count(x => (x.TablaAfectada ?? "").Contains("Movimiento", StringComparison.OrdinalIgnoreCase));
+    var ultimoRegistro = logs.OrderByDescending(x => x.FechaHora).FirstOrDefault();
+
+    string NombreArea(string? tabla)
+    {
+        var valor = (tabla ?? "").Trim().ToLowerInvariant();
+        return valor switch
+        {
+            "producto" => "Catálogo de productos",
+            "movimiento_inventario" => "Control de inventario",
+            "movimiento inventario" => "Control de inventario",
+            "pedido" => "Gestión de pedidos",
+            "detalle_pedido" => "Detalle comercial",
+            "detalle pedido" => "Detalle comercial",
+            "categoria" => "Categorías comerciales",
+            "proveedor" => "Proveedores",
+            "usuario" => "Usuarios y accesos",
+            "rol" => "Perfiles de usuario",
+            "auditoria" => "Control interno",
+            _ => string.IsNullOrWhiteSpace(tabla) ? "Proceso del sistema" : tabla.Replace("_", " ")
+        };
+    }
+
+    (string Texto, string Clase, string Icono) Actividad(string? accion)
+    {
+        var valor = (accion ?? "").Trim().ToUpperInvariant();
+        if (valor.Contains("UPDATE")) return ("Información actualizada", "activity-update", "bi-pencil-square");
+        if (valor.Contains("INSERT")) return ("Nuevo registro", "activity-insert", "bi-plus-circle");
+        if (valor.Contains("DELETE")) return ("Registro eliminado", "activity-delete", "bi-trash3");
+        return ("Actividad registrada", "activity-default", "bi-activity");
+    }
+}
+
+<div class="audit-page">
+    <div class="audit-hero rounded-5 p-4 p-lg-5 mb-4 shadow-lg">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-8 text-white">
+                <span class="audit-kicker"><i class="bi bi-shield-lock me-2"></i> Control interno</span>
+                <h1 class="fw-black display-6 mb-2">Bitácora de actividad del sistema</h1>
+                <p class="text-white-80 mb-0">
+                    Supervisa los cambios realizados en inventario, productos, pedidos y usuarios con un registro claro, profesional y fácil de revisar.
+                </p>
+            </div>
+            <div class="col-lg-4">
+                <div class="audit-last-card">
+                    <span class="small text-uppercase fw-bold text-muted">Último movimiento</span>
+                    @if (ultimoRegistro != null)
+                    {
+                        var ultimaActividad = Actividad(ultimoRegistro.Accion);
+                        <strong>@ultimaActividad.Texto</strong>
+                        <span>@NombreArea(ultimoRegistro.TablaAfectada)</span>
+                        <small>@ultimoRegistro.FechaHora.ToString("dd/MM/yyyy HH:mm")</small>
+                    }
+                    else
+                    {
+                        <strong>Sin actividad reciente</strong>
+                        <span>Aún no existen eventos registrados.</span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="audit-stat-card h-100">
+                <div class="audit-stat-icon bg-primary-subtle text-primary"><i class="bi bi-journal-check"></i></div>
+                <div>
+                    <span>Eventos registrados</span>
+                    <strong>@totalRegistros</strong>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="audit-stat-card h-100">
+                <div class="audit-stat-icon bg-warning-subtle text-warning"><i class="bi bi-arrow-repeat"></i></div>
+                <div>
+                    <span>Actualizaciones</span>
+                    <strong>@totalActualizaciones</strong>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="audit-stat-card h-100">
+                <div class="audit-stat-icon bg-success-subtle text-success"><i class="bi bi-box-seam"></i></div>
+                <div>
+                    <span>Movimientos de inventario</span>
+                    <strong>@totalInventario</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="audit-panel rounded-5 overflow-hidden shadow-sm mb-5">
+        <div class="audit-panel-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <span class="small text-uppercase fw-bold text-warning">Seguimiento operativo</span>
+                <h2 class="h5 fw-black mb-0">Actividad reciente</h2>
+            </div>
+            <a href="@Url.Action("Index", "Dashboard")" class="btn btn-outline-light rounded-pill px-3 fw-semibold">
+                <i class="bi bi-arrow-left me-1"></i> Volver al panel
+            </a>
+        </div>
+
+        <div class="table-responsive bg-white">
+            <table class="table table-hover align-middle mb-0 audit-table">
+                <thead>
+                    <tr>
+                        <th class="ps-4" style="width: 110px;">Código</th>
+                        <th>Área del sistema</th>
+                        <th>Actividad realizada</th>
+                        <th>Responsable</th>
+                        <th>Fecha de registro</th>
+                        <th class="text-end pe-4" style="width: 150px;">Detalle</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (logs.Any())
+                {
+                    foreach (var log in logs)
+                    {
+                        var actividad = Actividad(log.Accion);
+                        var area = NombreArea(log.TablaAfectada);
+                        <tr>
+                            <td class="ps-4">
+                                <span class="audit-code">CR-@log.IdEvento.ToString("000")</span>
+                            </td>
+                            <td>
+                                <div class="audit-area">
+                                    <span class="audit-area-icon"><i class="bi bi-diagram-3"></i></span>
+                                    <div>
+                                        <strong>@area</strong>
+                                        <small>Origen: @(log.TablaAfectada?.Replace("_", " ") ?? "Sistema")</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="activity-badge @actividad.Clase">
+                                    <i class="bi @actividad.Icono me-1"></i>@actividad.Texto
+                                </span>
+                            </td>
+                            <td>
+                                <span class="responsible-name"><i class="bi bi-person-badge me-1"></i>@(log.Usuario?.Nombre ?? (log.IdUsuario.HasValue ? $"Usuario #{log.IdUsuario}" : "Sistema"))</span>
+                            </td>
+                            <td>
+                                <span class="audit-date">@log.FechaHora.ToString("dd/MM/yyyy")</span>
+                                <small class="d-block text-muted">@log.FechaHora.ToString("HH:mm:ss")</small>
+                            </td>
+                            <td class="text-end pe-4">
+                                <button type="button" class="btn btn-sm btn-dark rounded-pill px-3 fw-semibold"
+                                        data-bs-toggle="modal" data-bs-target="#modalAuditoria"
+                                        data-id="CR-@log.IdEvento.ToString("000")"
+                                        data-area="@area"
+                                        data-actividad="@actividad.Texto"
+                                        data-responsable="@(log.Usuario?.Nombre ?? (log.IdUsuario.HasValue ? $"Usuario #{log.IdUsuario}" : "Sistema"))"
+                                        data-fecha="@log.FechaHora.ToString("dd/MM/yyyy HH:mm:ss")"
+                                        data-anterior="@(log.ValorAnterior ?? "Sin información anterior")"
+                                        data-nuevo="@(log.ValorNuevo ?? "Sin información registrada")">
+                                    <i class="bi bi-eye me-1"></i> Ver
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="bi bi-clipboard-x fs-1 d-block mb-2 opacity-50"></i>
+                            Todavía no se han registrado actividades en el sistema.
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade admin-safe-modal" data-bs-backdrop="false" data-bs-keyboard="true" id="modalAuditoria" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow rounded-5 audit-modal">
+            <div class="modal-header border-0 p-4 audit-modal-header">
+                <div>
+                    <span class="small text-uppercase fw-bold text-warning">Detalle de actividad</span>
+                    <h5 class="modal-title fw-black text-white mb-0" id="modalTitle">Registro del sistema</h5>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <div class="audit-detail-box">
+                            <span>Código</span>
+                            <strong id="lblId"></strong>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="audit-detail-box">
+                            <span>Responsable</span>
+                            <strong id="lblResponsable"></strong>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="audit-detail-box">
+                            <span>Actividad</span>
+                            <strong id="lblActividad"></strong>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="audit-detail-box">
+                            <span>Fecha y hora</span>
+                            <strong id="lblFecha"></strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="audit-label">Información previa</label>
+                        <div id="codeAnterior" class="audit-value-box"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="audit-label">Resultado registrado</label>
+                        <div id="codeNuevo" class="audit-value-box audit-value-new"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const modalAuditoria = document.getElementById('modalAuditoria');
+    modalAuditoria?.addEventListener('show.bs.modal', event => {
+        const button = event.relatedTarget;
+        document.getElementById('lblId').innerText = button.getAttribute('data-id');
+        document.getElementById('modalTitle').innerText = button.getAttribute('data-area');
+        document.getElementById('lblResponsable').innerText = button.getAttribute('data-responsable');
+        document.getElementById('lblActividad').innerText = button.getAttribute('data-actividad');
+        document.getElementById('lblFecha').innerText = button.getAttribute('data-fecha');
+        document.getElementById('codeAnterior').innerText = button.getAttribute('data-anterior') || 'Sin información anterior';
+        document.getElementById('codeNuevo').innerText = button.getAttribute('data-nuevo') || 'Sin información registrada';
+    });
+</script>

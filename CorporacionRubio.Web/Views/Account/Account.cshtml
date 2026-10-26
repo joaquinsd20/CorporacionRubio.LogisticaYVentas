@@ -1,0 +1,279 @@
+@model CorporacionRubio.Web.Models.LoginViewModel
+@{
+    Layout = null;
+    ViewData["Title"] = "Acceso corporativo";
+    var returnUrl = ViewData["ReturnUrl"] as string;
+    var perfil = ViewData["PerfilAcceso"] as string;
+    var esCliente = perfil == "cliente";
+    var esInterno = perfil == "interno";
+    var tituloPanel = esCliente ? "Portal cliente corporativo" : esInterno ? "Acceso interno corporativo" : "Acceso corporativo";
+    var subtituloPanel = esCliente
+        ? "Ingreso exclusivo para clientes empresariales que realizan solicitudes, revisan el catálogo y consultan la atención de sus pedidos."
+        : esInterno
+            ? "Ingreso exclusivo para personal autorizado de administración, ventas y logística de Corporación Rubio."
+            : "Seleccione sus credenciales asignadas para ingresar al espacio correspondiente.";
+    var tituloFormulario = esCliente ? "Ingresar al portal cliente" : esInterno ? "Ingresar al entorno interno" : "Iniciar sesión";
+    var descripcionFormulario = esCliente
+        ? "Use una cuenta de cliente corporativo. Las cuentas administrativas no ingresan por este acceso."
+        : esInterno
+            ? "Use una cuenta autorizada del equipo administrativo, comercial o logístico."
+            : "Ingrese sus credenciales asignadas. El sistema abrirá automáticamente el panel correspondiente a su perfil.";
+    var botonTexto = esCliente ? "Entrar al portal cliente" : esInterno ? "Entrar al panel interno" : "Ingresar al panel correspondiente";
+    var logoIcon = esCliente ? "bi-building-check" : "bi-shield-lock-fill";
+    var accessIcon = esCliente ? "bi-person-badge" : "bi-building-lock";
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@tituloFormulario - Corporación Rubio</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background:
+                radial-gradient(circle at 7% 9%, rgba(245,158,11,.18), transparent 27%),
+                radial-gradient(circle at 94% 12%, rgba(15,23,42,.10), transparent 28%),
+                linear-gradient(135deg, #f8fafc 0%, #eef2f7 55%, #e2e8f0 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Inter, 'Segoe UI', system-ui, -apple-system, sans-serif;
+            padding: 24px;
+            color: #0f172a;
+        }
+        .fw-black { font-weight: 900; }
+        .login-shell { width: 100%; max-width: 1120px; }
+        .login-card {
+            border: 1px solid rgba(148,163,184,.28);
+            border-radius: 30px;
+            overflow: hidden;
+            box-shadow: 0 32px 90px rgba(15,23,42,.16);
+            background: #ffffff;
+        }
+        .brand-panel {
+            min-height: 650px;
+            padding: 48px;
+            color: #ffffff;
+            position: relative;
+            background:
+                radial-gradient(circle at 20% 18%, rgba(251,191,36,.22), transparent 28%),
+                radial-gradient(circle at 88% 86%, rgba(120,53,15,.40), transparent 35%),
+                linear-gradient(145deg, #0b1220 0%, #111827 60%, #1e293b 100%);
+        }
+        .brand-panel::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(135deg, rgba(255,255,255,.08) 25%, transparent 25%),
+                linear-gradient(225deg, rgba(255,255,255,.05) 25%, transparent 25%);
+            background-size: 48px 48px;
+            opacity: .12;
+        }
+        .brand-panel > * { position: relative; z-index: 1; }
+        .logo-wrapper {
+            width: 76px;
+            height: 76px;
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #facc15, #f59e0b);
+            color:#111827;
+            font-size: 34px;
+            box-shadow: 0 18px 38px rgba(245,158,11,.34);
+        }
+        .identity-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: .45rem;
+            border: 1px solid rgba(255,255,255,.20);
+            background: rgba(255,255,255,.10);
+            padding: .55rem .85rem;
+            border-radius: 999px;
+            font-size: .82rem;
+            font-weight: 800;
+            color: #fef3c7;
+        }
+        .brand-title {
+            font-weight: 900;
+            letter-spacing: -.04em;
+            line-height: 1.02;
+            font-size: clamp(2.15rem, 4vw, 3.35rem);
+        }
+        .brand-copy { color: rgba(255,255,255,.82); font-size: 1.02rem; line-height: 1.75; max-width: 440px; }
+        .security-list { display: grid; gap: .85rem; margin-top: 2rem; }
+        .security-item { display: flex; align-items: center; gap: .75rem; color: rgba(255,255,255,.88); font-weight: 750; }
+        .security-item i {
+            width: 38px;
+            height: 38px;
+            border-radius: 13px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(250,204,21,.16);
+            color: #fde68a;
+        }
+        .login-form { padding: 48px; }
+        .form-heading { max-width: 540px; }
+        .back-link { color: #1d4ed8; font-weight: 800; text-decoration: none; }
+        .back-link:hover { color: #0f172a; }
+        .access-pill {
+            display:inline-flex;
+            align-items:center;
+            gap:.4rem;
+            border:1px solid #e2e8f0;
+            border-radius:999px;
+            padding:.5rem .85rem;
+            font-size:.82rem;
+            font-weight:850;
+            background:#f8fafc;
+            color:#334155;
+        }
+        .form-control, .input-group-text { border-color: #cbd5e1; min-height: 50px; background: #f8fafc; }
+        .form-control { font-weight: 650; }
+        .form-control:focus { background: #ffffff; border-color: #f59e0b; box-shadow: 0 0 0 .2rem rgba(245,158,11,.18); }
+        .input-group-text { color: #64748b; min-width: 48px; justify-content: center; }
+        .btn-login {
+            min-height: 52px;
+            border: 0;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: #fff;
+            font-weight: 900;
+            letter-spacing: .01em;
+            box-shadow: 0 16px 30px rgba(15,23,42,.20);
+        }
+        .btn-login:hover { color:#fff; background: linear-gradient(135deg, #1e293b, #92400e); transform: translateY(-1px); }
+        .small-link { color: #1d4ed8; font-weight: 800; text-decoration: none; }
+        .small-link:hover { color: #0f172a; }
+        .alert-custom { border: 0; border-radius: 15px; background:#fef2f2; color:#991b1b; font-weight:800; padding:12px 14px; }
+        .demo-box { background: linear-gradient(180deg, #f8fafc, #ffffff); border: 1px solid #dbe3ef; border-radius: 18px; padding: 18px; }
+        .demo-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: .65rem; margin-top: .75rem; }
+        .demo-user { border: 1px solid #e2e8f0; background: #ffffff; border-radius: 14px; padding: .75rem .8rem; }
+        .demo-user strong { display:block; color:#0f172a; font-size:.86rem; }
+        .demo-user span { color:#64748b; font-size:.78rem; word-break: break-all; }
+        .footer-note { color:#64748b; }
+        @@media (max-width: 991.98px) {
+            .brand-panel { min-height: auto; padding: 34px; }
+            .login-form { padding: 34px; }
+            .demo-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-shell">
+        <div class="login-card">
+            <div class="row g-0">
+                <div class="col-lg-5 brand-panel d-flex flex-column justify-content-between">
+                    <div>
+                        <div class="logo-wrapper mb-4"><i class="bi @logoIcon"></i></div>
+                        <span class="identity-badge mb-4"><i class="bi bi-check-circle-fill"></i> @(esCliente ? "Portal cliente autorizado" : esInterno ? "Acceso interno autorizado" : "Control de acceso corporativo")</span>
+                        <h1 class="brand-title mb-3">@tituloPanel</h1>
+                        <p class="brand-copy mb-0">@subtituloPanel</p>
+                        <div class="security-list">
+                            @if (esCliente)
+                            {
+                                <div class="security-item"><i class="bi bi-bag-check"></i><span>Solicitudes comerciales registradas</span></div>
+                                <div class="security-item"><i class="bi bi-box-seam"></i><span>Catálogo con disponibilidad vigente</span></div>
+                                <div class="security-item"><i class="bi bi-truck"></i><span>Seguimiento de atención y despacho</span></div>
+                            }
+                            else
+                            {
+                                <div class="security-item"><i class="bi bi-person-check"></i><span>Ingreso validado para personal autorizado</span></div>
+                                <div class="security-item"><i class="bi bi-diagram-3"></i><span>Paneles separados por función operativa</span></div>
+                                <div class="security-item"><i class="bi bi-database-check"></i><span>Trazabilidad de usuarios y operaciones</span></div>
+                            }
+                        </div>
+                    </div>
+                    <div class="small text-white-50 mt-4">
+                        <i class="bi bi-lock-fill me-1"></i> @(esCliente ? "Acceso destinado a clientes corporativos registrados." : "Acceso segmentado para administración, ventas y logística.")
+                    </div>
+                </div>
+                <div class="col-lg-7 login-form">
+                    <div class="form-heading mb-4">
+                        <a href="@Url.Action("Acceso", "Account")" class="back-link"><i class="bi bi-arrow-left me-1"></i> Cambiar tipo de acceso</a>
+                        <div class="mt-4 mb-2"><span class="access-pill"><i class="bi @accessIcon text-warning"></i>@(esCliente ? "Portal cliente" : esInterno ? "Acceso interno" : "Acceso general")</span></div>
+                        <h2 class="fw-black mb-2">@tituloFormulario</h2>
+                        <p class="text-muted mb-0">@descripcionFormulario</p>
+                    </div>
+
+                    @if (TempData["MensajeLogin"] != null)
+                    {
+                        <div class="alert alert-success rounded-4 border-0 mb-3"><i class="bi bi-check-circle-fill me-2"></i>@TempData["MensajeLogin"]</div>
+                    }
+                    @if (ViewBag.Error != null)
+                    {
+                        <div class="alert-custom mb-3"><i class="bi bi-exclamation-octagon-fill me-2"></i>@ViewBag.Error</div>
+                    }
+                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+
+                    <form asp-controller="Account" asp-action="Login" method="post" asp-route-returnUrl="@returnUrl" asp-route-perfil="@perfil">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label fw-bold">Correo electrónico</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                <input asp-for="Email" class="form-control" placeholder="@(esCliente ? "cliente@rubio.com" : "admin@rubio.com")" />
+                            </div>
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="Password" class="form-label fw-bold">Contraseña</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                <input asp-for="Password" class="form-control" placeholder="Ingrese su contraseña" />
+                            </div>
+                            <span asp-validation-for="Password" class="text-danger small"></span>
+                        </div>
+                        <div class="form-check mb-4">
+                            <input asp-for="Recordarme" class="form-check-input" />
+                            <label asp-for="Recordarme" class="form-check-label small text-muted">Mantener sesión activa en este equipo</label>
+                        </div>
+                        <button type="submit" class="btn btn-login w-100 d-flex align-items-center justify-content-center gap-2">
+                            <span>@botonTexto</span><i class="bi bi-arrow-right-short fs-4"></i>
+                        </button>
+                        <div class="d-flex flex-wrap justify-content-between gap-2 mt-3 small">
+                            <a class="small-link" href="@Url.Action("ForgotPassword", "Account")"><i class="bi bi-key me-1"></i> Olvidé mi contraseña</a>
+                            @if (!esCliente)
+                            {
+                                <a class="small-link text-danger" href="@Url.Action("RestablecerAdministrador", "Account")"><i class="bi bi-person-gear me-1"></i> Restablecer cuenta administradora</a>
+                            }
+                        </div>
+                    </form>
+
+                    <div class="demo-box mt-4 small">
+                        <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                            <strong class="text-dark"><i class="bi bi-person-vcard me-1 text-warning"></i> Credenciales de evaluación</strong>
+                            <span class="text-muted">Clave de prueba: <strong>123456</strong></span>
+                        </div>
+                        <div class="demo-grid">
+                            @if (esCliente)
+                            {
+                                <div class="demo-user"><strong>Cliente corporativo</strong><span>cliente@rubio.com</span></div>
+                            }
+                            else
+                            {
+                                <div class="demo-user"><strong>Administrador</strong><span>admin@rubio.com</span></div>
+                                <div class="demo-user"><strong>Jefe de Logística</strong><span>logistica@rubio.com</span></div>
+                                <div class="demo-user"><strong>Ejecutivo de Ventas</strong><span>ventas@rubio.com</span></div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="text-center small footer-note mt-3"><i class="bi bi-shield-check"></i> Acceso controlado — © 2026 Corporación Rubio S.R.L.</div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+</body>
+</html>

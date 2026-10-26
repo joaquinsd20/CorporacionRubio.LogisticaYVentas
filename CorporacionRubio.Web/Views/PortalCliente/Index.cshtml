@@ -1,0 +1,267 @@
+@model CorporacionRubio.Web.Models.PortalClienteViewModel
+@{
+    ViewData["Title"] = "Portal cliente";
+    var productos = Model.Productos.Take(12).ToList();
+}
+
+<div class="role-panel px-2 px-lg-4 py-3 client-portal-panel">
+    <section class="role-hero role-hero-cliente rounded-5 shadow-sm mb-4">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-8">
+                <span class="role-eyebrow"><i class="bi bi-person-check me-2"></i>Portal de compra corporativa</span>
+                <h1>Compra productos del catálogo con validación de stock, código de operación automático y seguimiento de atención</h1>
+                <p>Hola, <strong>@Model.NombreCliente</strong>. Desde este portal puedes generar una compra web. El sistema valida disponibilidad, genera el código de operación y Ventas confirma la condición de pago antes de enviar la orden a logística.</p>
+                <div class="d-flex flex-wrap gap-2 mt-3">
+                    <a class="btn btn-warning rounded-pill fw-bold text-dark px-4" href="#solicitud"><i class="bi bi-credit-card-2-front me-1"></i> Nueva compra</a>
+                    <a class="btn btn-outline-dark rounded-pill fw-bold px-4" href="@Url.Action("Index", "Home")#catalogo"><i class="bi bi-grid me-1"></i> Ver catálogo publicado</a>
+                    <a class="btn btn-outline-secondary rounded-pill fw-bold px-4" href="https://wa.me/51915947514?text=Hola%20Corporaci%C3%B3n%20Rubio%2C%20necesito%20soporte%20urgente%20sobre%20una%20compra%20web" target="_blank" rel="noopener"><i class="bi bi-whatsapp me-1"></i> Soporte urgente</a>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="role-status-card payment-status-card">
+                    <span>Seguimiento de compras</span>
+                    <strong>@Model.MisPedidos.Count operaciones</strong>
+                    <small>La disponibilidad se valida automáticamente y el código de operación lo genera el sistema.</small>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="alert alert-success rounded-4 shadow-sm"><i class="bi bi-check-circle me-2"></i>@TempData["Mensaje"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger rounded-4 shadow-sm"><i class="bi bi-exclamation-triangle me-2"></i>@TempData["Error"]</div>
+    }
+
+    <section class="row g-4">
+        <div class="col-xl-7">
+            <div class="data-panel h-100">
+                <div class="data-panel-header"><div><span>Catálogo disponible</span><h5>Productos publicados para compra corporativa</h5></div><i class="bi bi-box-seam"></i></div>
+                <div class="row g-3 p-3">
+                    @foreach (var p in productos)
+                    {
+                        <div class="col-md-6">
+                            <div class="client-product-card h-100">
+                                <span class="client-product-category">@(p.Categoria?.Nombre ?? "Producto")</span>
+                                <h6>@p.Nombre</h6>
+                                <p>@(string.IsNullOrWhiteSpace(p.Descripcion) ? "Producto disponible para compra corporativa, validación comercial y preparación logística." : p.Descripcion)</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <strong>S/ @((p.PrecioUnitario ?? 0m).ToString("N2"))</strong>
+                                    <span class="badge-soft-success">Stock @(p.StockActual ?? 0)</span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-5" id="solicitud">
+            <div class="data-panel mb-4 payment-checkout-panel">
+                <div class="data-panel-header"><div><span>Nueva compra web</span><h5>Stock, condición de pago y operación automática</h5></div><i class="bi bi-credit-card"></i></div>
+                <form asp-action="SolicitarPedido" method="post" class="p-3" id="formCompraCliente">
+                    @Html.AntiForgeryToken()
+                    <p class="text-muted small mb-3">Selecciona los productos requeridos. El sistema validará stock disponible y generará un código único de operación; Ventas revisará la condición de pago antes de descontar inventario y derivar a logística.</p>
+                    @for (var i = 0; i < 3; i++)
+                    {
+                        <div class="row g-2 align-items-end mb-2 compra-item-row">
+                            <div class="col-8">
+                                <label class="form-label small fw-semibold">Producto @(i + 1)</label>
+                                <select name="idProductos" class="form-select rounded-3 producto-cliente-select">
+                                    <option value="0">Seleccione producto</option>
+                                    @foreach (var p in Model.Productos)
+                                    {
+                                        <option value="@p.IdProducto" data-precio="@((p.PrecioUnitario ?? 0m).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture))" data-stock="@(p.StockActual ?? 0)">@p.Nombre - S/ @((p.PrecioUnitario ?? 0m).ToString("N2")) - stock @(p.StockActual ?? 0)</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label small fw-semibold">Cantidad</label>
+                                <input type="number" name="cantidades" class="form-control rounded-3 cantidad-cliente-input" min="0" value="0" />
+                            </div>
+                        </div>
+                    }
+
+                    <div class="payment-box mt-3">
+                        <div class="payment-box-title"><i class="bi bi-shield-check"></i><span>Condición de pago y validación comercial</span></div>
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Método o condición de pago</label>
+                                <select name="metodoPago" class="form-select rounded-3" id="metodoPagoCliente" required>
+                                    <option value="">Seleccione</option>
+                                    <option>Transferencia bancaria</option>
+                                    <option>Yape / Plin</option>
+                                    <option>Depósito bancario</option>
+                                    <option>Pago contra entrega</option>
+                                    <option>Crédito corporativo</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Código de operación</label>
+                                <input type="text" class="form-control rounded-3 fw-bold operation-code-preview" value="Se generará automáticamente" readonly />
+                            </div>
+                            <div class="col-12">
+                                <div class="payment-method-help" id="paymentMethodHelp">
+                                    <i class="bi bi-info-circle"></i>
+                                    <span>Selecciona un método para ver la validación que realizará el área comercial.</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Comprobante solicitado</label>
+                                <select name="tipoComprobante" class="form-select rounded-3">
+                                    <option>Boleta</option>
+                                    <option>Factura</option>
+                                    <option>Nota de pedido</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Total referencial</label>
+                                <input type="text" class="form-control rounded-3 fw-bold" id="totalClienteCompra" value="S/ 0.00" readonly />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-semibold">Datos adicionales para validar la compra</label>
+                                <textarea name="observacionPago" class="form-control rounded-3" rows="2" maxlength="200" id="observacionPagoCliente" placeholder="Ej. RUC para factura, titular de pago, contacto de recepción o condición comercial acordada."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-warning text-dark fw-bold rounded-pill w-100 mt-3" id="btnEnviarCompra"><i class="bi bi-send-check me-1"></i> Registrar compra y generar operación</button>
+                    <small class="d-block text-muted mt-2">El sistema valida stock al registrar; Ventas aprueba la condición de pago y recién deriva la orden a logística.</small>
+                </form>
+            </div>
+
+            <div class="data-panel">
+                <div class="data-panel-header"><div><span>Seguimiento</span><h5>Mis compras y solicitudes</h5></div><i class="bi bi-clock-history"></i></div>
+                <div class="data-panel-body p-0">
+                    @if (Model.MisPedidos.Any())
+                    {
+                        foreach (var pedido in Model.MisPedidos.Take(8))
+                        {
+                            var total = pedido.DetallesPedido?.Sum(d => d.Subtotal ?? 0m) ?? 0m;
+                            var estado = pedido.Estado ?? "Solicitud recibida";
+                            var pago = pedido.PagoPedido?.EstadoPago ?? "Sin pago registrado";
+                            <div class="data-list-row align-items-start">
+                                <div><strong>Compra #@pedido.IdPedido</strong><small>@pedido.FechaPedido.ToString("dd/MM/yyyy HH:mm") · S/ @total.ToString("N2")</small><small>Pago: @pago</small><small>Código: @(pedido.PagoPedido?.ReferenciaOperacion ?? "Pendiente")</small></div>
+                                <span class="badge-soft-info">@estado</span>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="empty-state"><i class="bi bi-inbox"></i><strong>Sin compras registradas</strong><span>Cuando registres tu primera compra web, aparecerá aquí con el estado de validación y entrega.</span></div>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+
+@section Scripts {
+    <script>
+        (function () {
+            const raw = sessionStorage.getItem('rubio_consulta_web');
+            if (raw) {
+                try {
+                    const draft = JSON.parse(raw);
+                    const product = (draft.product || '').toLowerCase();
+                    const quantity = draft.quantity || '';
+
+                    if (product) {
+                        const firstSelect = document.querySelector('select[name="idProductos"]');
+                        if (firstSelect) {
+                            const option = Array.from(firstSelect.options).find(o => o.text.toLowerCase().includes(product));
+                            if (option) firstSelect.value = option.value;
+                        }
+                    }
+
+                    if (quantity) {
+                        const firstQty = document.querySelector('input[name="cantidades"]');
+                        if (firstQty) firstQty.value = quantity.replace(/[^0-9]/g, '') || '1';
+                    }
+
+                    const solicitud = document.getElementById('solicitud');
+                    if (solicitud) {
+                        solicitud.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        const panel = solicitud.querySelector('.data-panel');
+                        if (panel) {
+                            panel.classList.add('portal-prefilled');
+                            setTimeout(() => panel.classList.remove('portal-prefilled'), 2200);
+                        }
+                    }
+                } catch (_) {
+                    sessionStorage.removeItem('rubio_consulta_web');
+                }
+            }
+
+            const form = document.getElementById('formCompraCliente');
+            const totalBox = document.getElementById('totalClienteCompra');
+            function recalcularTotal() {
+                let total = 0;
+                document.querySelectorAll('.compra-item-row').forEach(row => {
+                    const select = row.querySelector('.producto-cliente-select');
+                    const qty = Number(row.querySelector('.cantidad-cliente-input')?.value || 0);
+                    const opt = select?.options[select.selectedIndex];
+                    const precio = Number(opt?.dataset?.precio || 0);
+                    total += precio * qty;
+                });
+                if (totalBox) totalBox.value = 'S/ ' + total.toFixed(2);
+                return total;
+            }
+
+            const metodoPago = document.getElementById('metodoPagoCliente');
+            const metodoHelp = document.getElementById('paymentMethodHelp');
+            const obs = document.getElementById('observacionPagoCliente');
+            const ayudasPago = {
+                'Transferencia bancaria': 'Se generará un código CR-BNK. Ventas validará el abono en cuenta, titular, importe y comprobante antes de liberar la orden.',
+                'Yape / Plin': 'Se generará un código CR-APP. Ventas verificará el pago móvil, monto y titular asociado al contacto indicado.',
+                'Depósito bancario': 'Se generará un código CR-BNK. Ventas confirmará el depósito bancario y la coincidencia del importe con la compra.',
+                'Pago contra entrega': 'Se generará un código CR-CDE. Ventas aprobará la condición contraentrega y logística cobrará al momento de entregar.',
+                'Crédito corporativo': 'Se generará un código CR-CRE. Ventas evaluará la línea de crédito, plazo y condición comercial antes de aprobar.'
+            };
+            const placeholdersPago = {
+                'Transferencia bancaria': 'Ej. Banco usado, titular, fecha aproximada y RUC para factura.',
+                'Yape / Plin': 'Ej. Celular asociado, titular del pago y contacto para confirmar.',
+                'Depósito bancario': 'Ej. Agencia o canal usado, titular y fecha aproximada.',
+                'Pago contra entrega': 'Ej. Dirección de entrega, persona que recibirá y horario preferido.',
+                'Crédito corporativo': 'Ej. Razón social, RUC, plazo solicitado y contacto de compras.'
+            };
+            metodoPago?.addEventListener('change', () => {
+                const value = metodoPago.value;
+                if (metodoHelp) metodoHelp.querySelector('span').textContent = ayudasPago[value] || 'Selecciona un método para ver la validación que realizará el área comercial.';
+                if (obs) obs.placeholder = placeholdersPago[value] || 'Ej. RUC para factura, titular de pago, contacto de recepción o condición comercial acordada.';
+            });
+
+            document.querySelectorAll('.producto-cliente-select, .cantidad-cliente-input').forEach(el => el.addEventListener('input', recalcularTotal));
+            document.querySelectorAll('.producto-cliente-select').forEach(el => el.addEventListener('change', recalcularTotal));
+            recalcularTotal();
+
+            form?.addEventListener('submit', e => {
+                const total = recalcularTotal();
+                if (total <= 0) {
+                    e.preventDefault();
+                    alert('Seleccione al menos un producto y una cantidad mayor a cero.');
+                    return;
+                }
+
+                let errorStock = '';
+                document.querySelectorAll('.compra-item-row').forEach(row => {
+                    const select = row.querySelector('.producto-cliente-select');
+                    const qty = Number(row.querySelector('.cantidad-cliente-input')?.value || 0);
+                    const opt = select?.options[select.selectedIndex];
+                    const stock = Number(opt?.dataset?.stock || 0);
+                    if (select?.value !== '0' && qty > stock) {
+                        errorStock = `${opt.text.split(' - ')[0]} solo tiene ${stock} unidades disponibles.`;
+                    }
+                });
+
+                if (errorStock) {
+                    e.preventDefault();
+                    alert(errorStock);
+                }
+            });
+        })();
+    </script>
+}

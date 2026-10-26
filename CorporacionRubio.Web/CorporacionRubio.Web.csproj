@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.11">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CorporacionRubio.Business\CorporacionRubio.Business.csproj" />
+    <ProjectReference Include="..\CorporacionRubio.Data\CorporacionRubio.Data.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Evita que Visual Studio compile controladores antiguos si el ZIP se extrae sobre una carpeta previa. -->
+    <Compile Remove="Controllers\*.cs" />
+  </ItemGroup>
+
+</Project>

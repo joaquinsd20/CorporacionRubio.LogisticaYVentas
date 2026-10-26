@@ -1,0 +1,100 @@
+@{
+    ViewData["Title"] = "Centro administrativo";
+}
+
+<section class="admin-zone-shell">
+    <div class="admin-zone-hero mb-4">
+        <div>
+            <span class="section-kicker"><i class="bi bi-building-lock me-1"></i> Administración ejecutiva del sistema</span>
+            <h1>Centro de control administrativo</h1>
+            <p>
+                Panel exclusivo para administrar indicadores, usuarios, seguridad, auditoría y supervisión de los flujos de venta, pago e inventario sin mezclar funciones operativas.
+            </p>
+            <div class="d-flex flex-wrap gap-2 mt-3">
+                <a class="btn btn-warning rounded-pill fw-bold text-dark px-4" href="@Url.Action("Index", "Dashboard")">
+                    <i class="bi bi-speedometer2 me-1"></i> Ver indicadores generales
+                </a>
+                <a class="btn btn-outline-dark rounded-pill fw-bold px-4" href="@Url.Action("Index", "Seguridad")">
+                    <i class="bi bi-person-lock me-1"></i> Administrar seguridad
+                </a>
+            </div>
+        </div>
+        <div class="admin-zone-status">
+            <div class="small text-muted text-uppercase fw-bold mb-2">Estado general del sistema</div>
+            <div class="d-flex justify-content-between py-2 border-bottom"><span>Productos publicados</span><strong>@ViewBag.Productos</strong></div>
+            <div class="d-flex justify-content-between py-2 border-bottom"><span>Pedidos registrados</span><strong>@ViewBag.Pedidos</strong></div>
+            <div class="d-flex justify-content-between py-2 border-bottom"><span>Movimientos de inventario</span><strong>@ViewBag.Movimientos</strong></div>
+            <div class="d-flex justify-content-between py-2"><span>Registros de auditoría</span><strong>@ViewBag.Auditorias</strong></div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-6 col-xl-3">
+            <div class="zone-kpi-card">
+                <span>Inventario crítico</span>
+                <strong>@ViewBag.StockCritico</strong>
+                <small>Productos bajo el mínimo recomendado para reposición o revisión logística.</small>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="zone-kpi-card">
+                <span>Órdenes en gestión</span>
+                <strong>@ViewBag.PedidosPendientes</strong>
+                <small>Compras, pagos y pedidos que aún requieren acción comercial o logística.</small>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="zone-kpi-card">
+                <span>Seguridad del sistema</span>
+                <strong>Identity</strong>
+                <small>Gestión de identidad, roles, recuperación de acceso y trazabilidad.</small>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="zone-kpi-card">
+                <span>Arquitectura aplicada</span>
+                <strong>MVC + EF</strong>
+                <small>ASP.NET Core MVC, Entity Framework, Identity y auditoría por roles.</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <article class="admin-module-card module-operativo h-100">
+                <div class="module-icon"><i class="bi bi-box-seam"></i></div>
+                <h3>Operación comercial y logística</h3>
+                <p>Gestión diaria de catálogo, inventario, compras, validación comercial, pagos y seguimiento logístico.</p>
+                <div class="module-links">
+                    <a href="@Url.Action("Index", "Dashboard")"><i class="bi bi-bar-chart-line me-2"></i>Panel operativo general</a>
+                    <a href="@Url.Action("Index", "Inventario")"><i class="bi bi-boxes me-2"></i>Inventario y abastecimiento</a>
+                    <a href="@Url.Action("Index", "Pedidos")"><i class="bi bi-cart-check me-2"></i>Ventas y pedidos corporativos</a>
+                </div>
+            </article>
+        </div>
+        <div class="col-lg-4">
+            <article class="admin-module-card module-seguridad h-100">
+                <div class="module-icon"><i class="bi bi-shield-lock"></i></div>
+                <h3>Seguridad, usuarios y auditoría</h3>
+                <p>Administración restringida de cuentas, roles, recuperación de acceso y bitácora de acciones críticas.</p>
+                <div class="module-links">
+                    <a href="@Url.Action("Index", "Seguridad")"><i class="bi bi-person-lock me-2"></i>Seguridad y accesos</a>
+                    <a href="@Url.Action("Register", "Account")"><i class="bi bi-person-plus me-2"></i>Registrar usuario interno</a>
+                    <a href="@Url.Action("Index", "Auditoria")"><i class="bi bi-journal-check me-2"></i>Bitácora de control</a>
+                </div>
+            </article>
+        </div>
+        <div class="col-lg-4">
+            <article class="admin-module-card module-portales h-100">
+                <div class="module-icon"><i class="bi bi-people"></i></div>
+                <h3>Supervisión operativa por perfil</h3>
+                <p>Accesos de supervisión para verificar el trabajo de logística, ventas y cliente. No reemplazan el gobierno administrativo; ayudan a controlar el flujo completo.</p>
+                <div class="module-links">
+                    <a href="@Url.Action("Index", "PanelLogistico")"><i class="bi bi-truck me-2"></i>Supervisar logística</a>
+                    <a href="@Url.Action("Index", "PanelVentas")"><i class="bi bi-graph-up-arrow me-2"></i>Supervisar ventas</a>
+                    <a href="@Url.Action("Index", "PortalCliente")"><i class="bi bi-person-check me-2"></i>Supervisar portal cliente</a>
+                </div>
+            </article>
+        </div>
+    </div>
+</section>

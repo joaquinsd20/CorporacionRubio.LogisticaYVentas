@@ -1,0 +1,203 @@
+@model CorporacionRubio.Web.Models.SeguridadIndexViewModel
+@{
+    ViewData["Title"] = "Seguridad y accesos";
+}
+
+<div class="container-fluid px-2 px-lg-4 py-3">
+    <section class="security-hero rounded-5 shadow-sm mb-4 p-4 p-lg-5">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-8">
+                <span class="section-kicker"><i class="bi bi-shield-lock me-1"></i> Seguridad Identity</span>
+                <h1 class="display-6 fw-black mb-3">Administración de usuarios, roles y recuperación de cuentas</h1>
+                <p class="text-muted mb-0">
+                    Módulo implementado con ASP.NET Core Identity. Permite crear roles con <strong>RoleManager</strong>, gestionar usuarios con <strong>UserManager</strong>, controlar acceso por roles y restablecer credenciales con tokens seguros.
+                </p>
+            </div>
+            <div class="col-lg-4">
+                <div class="bg-white rounded-4 p-4 border shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted small fw-bold text-uppercase">Roles activos</span>
+                        <span class="badge bg-dark rounded-pill">@Model.Roles.Count</span>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach (var rol in Model.Roles)
+                        {
+                            <span class="badge rounded-pill bg-warning text-dark px-3 py-2">@rol</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="alert alert-success rounded-4 border-0 shadow-sm"><i class="bi bi-check-circle-fill me-2"></i>@TempData["Mensaje"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger rounded-4 border-0 shadow-sm"><i class="bi bi-exclamation-octagon-fill me-2"></i>@TempData["Error"]</div>
+    }
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-white py-3 border-0">
+                    <strong><i class="bi bi-diagram-3 text-warning me-2"></i>Crear nuevo rol</strong>
+                </div>
+                <div class="card-body pt-0">
+                    <form asp-action="CrearRol" method="post" class="vstack gap-3">
+                        @Html.AntiForgeryToken()
+                        <input name="nuevoRol" class="form-control rounded-3" placeholder="Ej. SupervisorAlmacen" />
+                        <button class="btn btn-dark rounded-3 fw-bold" type="submit"><i class="bi bi-plus-circle me-1"></i> Crear rol</button>
+                    </form>
+                    <p class="small text-muted mt-3 mb-0">Roles base incluidos: Administrador, JefeLogistica, Ventas y Cliente.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-white py-3 border-0">
+                    <strong><i class="bi bi-person-plus text-success me-2"></i>Alta de usuario</strong>
+                </div>
+                <div class="card-body pt-0">
+                    <p class="text-muted small">Registra colaboradores internos, asigna perfil y crea contraseña cifrada con PasswordHash de Identity.</p>
+                    <a class="btn btn-success rounded-3 fw-bold w-100" href="@Url.Action("Register", "Account")">
+                        <i class="bi bi-person-check me-1"></i> Registrar usuario
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-white py-3 border-0">
+                    <strong><i class="bi bi-arrow-clockwise text-danger me-2"></i>Restablecer admin</strong>
+                </div>
+                <div class="card-body pt-0">
+                    <p class="text-muted small">Repara el acceso principal del sistema, reactiva la cuenta y asigna el rol Administrador.</p>
+                    <form asp-action="RestablecerAdministrador" method="post">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-outline-danger rounded-3 fw-bold w-100" type="submit" onclick="return confirm('Se restablecerá admin@rubio.com con la clave 123456. ¿Continuar?')">
+                            <i class="bi bi-shield-fill-exclamation me-1"></i> Restablecer a 123456
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <strong><i class="bi bi-people-fill text-primary me-2"></i>Cuentas registradas</strong>
+                <div class="small text-muted">Control de acceso, cambio de rol, bloqueo y restablecimiento de contraseña.</div>
+            </div>
+            <span class="badge rounded-pill bg-primary-subtle text-primary px-3 py-2">@Model.Usuarios.Count usuarios</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table align-middle mb-0 table-hover security-table">
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Rol actual</th>
+                        <th>Estado</th>
+                        <th>Intentos</th>
+                        <th>Cambiar rol</th>
+                        <th>Restablecer clave</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var usuario in Model.Usuarios)
+                    {
+                        var siguienteEstado = usuario.Estado == "Activo" ? "Inactivo" : "Activo";
+                        var textoEstado = usuario.Estado == "Activo" ? "Desactivar" : "Activar";
+                        var claseEstado = usuario.Estado == "Activo" ? "btn-outline-danger" : "btn-outline-success";
+                        <tr>
+                            <td>
+                                <div class="fw-bold">@(string.IsNullOrWhiteSpace(usuario.NombreCompleto) ? usuario.Email : usuario.NombreCompleto)</div>
+                                <div class="small text-muted">@usuario.Email</div>
+                                <div class="small text-muted">@usuario.Cargo · @usuario.Area</div>
+                            </td>
+                            <td><span class="badge bg-dark rounded-pill px-3 py-2">@usuario.RolesTexto</span></td>
+                            <td>
+                                @if (!usuario.EmailConfirmado)
+                                {
+                                    <span class="badge bg-warning-subtle text-warning rounded-pill px-3 py-2">Pendiente de confirmación</span>
+                                }
+                                else if (usuario.Bloqueado || usuario.Estado != "Activo")
+                                {
+                                    <span class="badge bg-danger-subtle text-danger rounded-pill px-3 py-2">Cuenta restringida</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success-subtle text-success rounded-pill px-3 py-2">Activa</span>
+                                }
+                            </td>
+                            <td><span class="fw-bold">@usuario.IntentosFallidos</span></td>
+                            <td style="min-width:220px">
+                                <form asp-action="CambiarRol" method="post" class="d-flex gap-2">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="userId" value="@usuario.Id" />
+                                    <select name="rol" class="form-select form-select-sm rounded-3">
+                                        @foreach (var rol in Model.Roles)
+                                        {
+                                            if (rol == usuario.RolPrincipal)
+                                            {
+                                                <option value="@rol" selected>@rol</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@rol">@rol</option>
+                                            }
+                                        }
+                                    </select>
+                                    <button class="btn btn-sm btn-outline-primary rounded-3 fw-bold" type="submit">Guardar</button>
+                                </form>
+                            </td>
+                            <td style="min-width:230px">
+                                <form asp-action="RestablecerPassword" method="post" class="d-flex gap-2">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="userId" value="@usuario.Id" />
+                                    <input name="nuevaPassword" class="form-control form-control-sm rounded-3" value="123456" />
+                                    <button class="btn btn-sm btn-outline-warning rounded-3 fw-bold" type="submit">Reset</button>
+                                </form>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column gap-2">
+                                    @if (!usuario.EmailConfirmado)
+                                    {
+                                        <form asp-action="ConfirmarCuenta" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="userId" value="@usuario.Id" />
+                                            <button class="btn btn-sm btn-outline-warning rounded-3 fw-bold w-100" type="submit">Confirmar</button>
+                                        </form>
+                                    }
+                                    <form asp-action="CambiarEstado" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="userId" value="@usuario.Id" />
+                                        <input type="hidden" name="estado" value="@siguienteEstado" />
+                                        <button class="btn btn-sm @claseEstado rounded-3 fw-bold w-100" type="submit">
+                                            @textoEstado
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.security-table form').forEach(form => {
+            form.addEventListener('submit', () => {
+                const btn = form.querySelector('button[type="submit"]');
+                if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Procesando'; }
+            });
+        });
+    </script>
+}

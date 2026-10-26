@@ -1,0 +1,43 @@
+@model CorporacionRubio.Business.Dto.InventarioIndexDto
+@{
+    var categorias = Model?.Categorias ?? new List<Categoria>();
+    var proveedores = Model?.Proveedores ?? new List<Proveedor>();
+}
+<div class="row g-3">
+    <div class="col-md-6">
+        <label class="form-label fw-semibold">Nombre</label>
+        <input type="text" name="nombre" class="form-control" maxlength="100" required />
+    </div>
+    <div class="col-md-3">
+        <label class="form-label fw-semibold">Precio unitario</label>
+        <input type="number" name="precio" class="form-control" min="0.01" step="0.01" required />
+    </div>
+    <div class="col-md-3">
+        <label class="form-label fw-semibold">Stock inicial</label>
+        <input type="number" name="stock" class="form-control" min="0" step="1" value="0" required />
+    </div>
+    <div class="col-md-6">
+        <label class="form-label fw-semibold">Categoría</label>
+        <select name="idCategoria" class="form-select" required>
+            <option value="">Seleccione</option>
+            @foreach (var categoria in categorias)
+            {
+                <option value="@categoria.IdCategoria">@categoria.Nombre</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-6">
+        <label class="form-label fw-semibold">Proveedor</label>
+        <select name="idProveedor" class="form-select" required>
+            <option value="">Seleccione</option>
+            @foreach (var proveedor in proveedores)
+            {
+                <option value="@proveedor.IdProveedor">@proveedor.NombreEmpresa</option>
+            }
+        </select>
+    </div>
+    <div class="col-12">
+        <label class="form-label fw-semibold">Descripción</label>
+        <textarea name="descripcion" class="form-control" rows="3" maxlength="255"></textarea>
+    </div>
+</div>

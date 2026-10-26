@@ -1,0 +1,348 @@
+@model CorporacionRubio.Business.Dto.InventarioIndexDto
+@{
+    ViewData["Title"] = "Inventario";
+    var productos = Model?.Productos ?? new List<Producto>();
+    var categorias = Model?.Categorias ?? new List<Categoria>();
+    var proveedores = Model?.Proveedores ?? new List<Proveedor>();
+    var movimientos = Model?.MovimientosRecientes ?? new List<MovimientoInventario>();
+    var stockTotal = productos.Sum(p => p.StockActual ?? 0);
+    var valorInventario = productos.Sum(p => (p.StockActual ?? 0) * (p.PrecioUnitario ?? 0m));
+    var stockCritico = productos.Count(p => (p.StockActual ?? 0) <= 10);
+}
+
+<div class="container-fluid px-4 mt-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index", "Dashboard")" class="text-decoration-none text-muted small">Dashboard</a></li>
+                    <li class="breadcrumb-item active fw-semibold small" aria-current="page">Inventario</li>
+                </ol>
+            </nav>
+            <h1 class="h4 fw-bold text-dark m-0"><i class="bi bi-box-seam-fill text-primary me-2"></i> Gestión Comercial de Inventario</h1>
+            <p class="text-muted small mb-0">Control de catálogo, stock disponible, proveedores y movimientos de almacén.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-primary rounded-3 fw-semibold" data-bs-toggle="modal" data-bs-target="#modalNuevoProducto">
+                <i class="bi bi-plus-circle me-1"></i> Nuevo producto
+            </button>
+            <button class="btn btn-outline-primary rounded-3 fw-semibold" data-bs-toggle="modal" data-bs-target="#modalCategoria">
+                <i class="bi bi-tags me-1"></i> Registrar categoría
+            </button>
+            <button class="btn btn-outline-primary rounded-3 fw-semibold" data-bs-toggle="modal" data-bs-target="#modalProveedor">
+                <i class="bi bi-truck me-1"></i> Registrar proveedor
+            </button>
+        </div>
+    </div>
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger rounded-3 border-0 shadow-sm"><i class="bi bi-exclamation-octagon-fill me-2"></i>@ViewBag.Error</div>
+    }
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show rounded-3 border-0 shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["Mensaje"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show rounded-3 border-0 shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+    }
+
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-xl-3"><div class="card kpi-card border-0 shadow-sm"><div class="card-body"><span class="text-muted small">Productos</span><h3 class="fw-bold mb-0">@productos.Count</h3></div></div></div>
+        <div class="col-6 col-xl-3"><div class="card kpi-card border-0 shadow-sm"><div class="card-body"><span class="text-muted small">Stock total</span><h3 class="fw-bold mb-0">@stockTotal</h3></div></div></div>
+        <div class="col-6 col-xl-3"><div class="card kpi-card border-0 shadow-sm"><div class="card-body"><span class="text-muted small">Valor inventario</span><h3 class="fw-bold mb-0">S/ @valorInventario.ToString("F2")</h3></div></div></div>
+        <div class="col-6 col-xl-3"><div class="card kpi-card border-0 shadow-sm"><div class="card-body"><span class="text-muted small">Stock crítico</span><h3 class="fw-bold mb-0 text-danger">@stockCritico</h3></div></div></div>
+    </div>
+
+    <ul class="nav nav-pills gap-2 mb-3" id="inventarioTabs" role="tablist">
+        <li class="nav-item" role="presentation"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tabProductos" type="button">Productos</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabMovimientos" type="button">Movimientos</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabCategorias" type="button">Categorías</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabProveedores" type="button">Proveedores</button></li>
+    </ul>
+
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="tabProductos">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <strong><i class="bi bi-boxes text-primary me-2"></i>Catálogo de productos</strong>
+                    <span class="badge bg-primary-subtle text-primary">@productos.Count registros</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light small text-uppercase text-secondary">
+                            <tr>
+                                <th class="ps-4">Producto</th>
+                                <th>Categoría</th>
+                                <th>Proveedor</th>
+                                <th class="text-end">Precio</th>
+                                <th class="text-center">Stock</th>
+                                <th>Estado</th>
+                                <th class="text-end pe-4">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @if (productos.Any())
+                        {
+                            foreach (var item in productos)
+                            {
+                                var stock = item.StockActual ?? 0;
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="fw-bold">@item.Nombre</div>
+                                        <div class="small text-muted">@(string.IsNullOrWhiteSpace(item.Descripcion) ? "Sin descripción" : item.Descripcion)</div>
+                                    </td>
+                                    <td>@(item.Categoria?.Nombre ?? "Sin categoría")</td>
+                                    <td>@(item.Proveedor?.NombreEmpresa ?? "Sin proveedor")</td>
+                                    <td class="text-end fw-semibold">S/ @((item.PrecioUnitario ?? 0m).ToString("F2"))</td>
+                                    <td class="text-center"><span class="badge @(stock <= 10 ? "bg-danger" : "bg-success") rounded-pill px-3">@stock</span></td>
+                                    <td>
+                                        @if (stock <= 0) { <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Sin stock</span> }
+                                        else if (stock <= 10) { <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Crítico</span> }
+                                        else { <span class="badge bg-success-subtle text-success border border-success-subtle">Disponible</span> }
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalMovimiento"
+                                                    data-id="@item.IdProducto" data-nombre="@item.Nombre" data-stock="@stock">
+                                                <i class="bi bi-arrow-left-right"></i>
+                                            </button>
+                                            <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalEditarProducto"
+                                                    data-id="@item.IdProducto"
+                                                    data-nombre="@item.Nombre"
+                                                    data-descripcion="@(item.Descripcion ?? "")"
+                                                    data-precio="@((item.PrecioUnitario ?? 0m).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture))"
+                                                    data-categoria="@(item.IdCategoria ?? 0)"
+                                                    data-proveedor="@(item.IdProveedor ?? 0)">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </button>
+                                            <form asp-action="EliminarProducto" asp-controller="Inventario" method="post" class="d-inline form-confirm">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="idProducto" value="@item.IdProducto" />
+                                                <button class="btn btn-outline-danger" type="submit"><i class="bi bi-trash"></i></button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="7" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-1 d-block"></i>No hay productos registrados.</td></tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="tabMovimientos">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+                <div class="card-header bg-white py-3"><strong><i class="bi bi-clock-history text-primary me-2"></i>Últimos movimientos</strong></div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light small text-uppercase text-secondary"><tr><th class="ps-4">Fecha</th><th>Producto</th><th>Usuario</th><th>Tipo</th><th class="text-end pe-4">Cantidad</th></tr></thead>
+                        <tbody>
+                        @if (movimientos.Any())
+                        {
+                            foreach (var mov in movimientos)
+                            {
+                                <tr>
+                                    <td class="ps-4 small text-muted">@mov.FechaMovimiento.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td class="fw-semibold">@(mov.Producto?.Nombre ?? $"Producto #{mov.IdProducto}")</td>
+                                    <td>@(mov.Usuario?.Nombre ?? $"Usuario #{mov.IdUsuario}")</td>
+                                    <td><span class="badge @(mov.TipoMovimiento == "INGRESO" ? "bg-success" : "bg-danger")">@mov.TipoMovimiento</span></td>
+                                    <td class="text-end pe-4 fw-bold">@mov.Cantidad</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="5" class="text-center py-4 text-muted">Aún no hay movimientos.</td></tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="tabCategorias">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+                <div class="card-header bg-white py-3 d-flex justify-content-between"><strong><i class="bi bi-tags text-primary me-2"></i>Categorías</strong><button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalCategoria">Registrar categoría</button></div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light small text-uppercase text-secondary"><tr><th class="ps-4">ID</th><th>Nombre</th><th class="text-center">Productos asociados</th><th class="text-end pe-4">Acciones</th></tr></thead>
+                        <tbody>
+                        @foreach (var cat in categorias)
+                        {
+                            <tr>
+                                <td class="ps-4 font-monospace">#@cat.IdCategoria</td>
+                                <td class="fw-semibold">@cat.Nombre</td>
+                                <td class="text-center">@(cat.Productos?.Count ?? 0)</td>
+                                <td class="text-end pe-4">
+                                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalEditarCategoria" data-id="@cat.IdCategoria" data-nombre="@cat.Nombre"><i class="bi bi-pencil"></i></button>
+                                    <form asp-action="EliminarCategoria" asp-controller="Inventario" method="post" class="d-inline form-confirm">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="idCategoria" value="@cat.IdCategoria" />
+                                        <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="tabProveedores">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+                <div class="card-header bg-white py-3 d-flex justify-content-between"><strong><i class="bi bi-truck text-primary me-2"></i>Proveedores</strong><button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalProveedor">Registrar proveedor</button></div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light small text-uppercase text-secondary"><tr><th class="ps-4">ID</th><th>Empresa</th><th>RUC</th><th class="text-center">Productos asociados</th><th class="text-end pe-4">Acciones</th></tr></thead>
+                        <tbody>
+                        @foreach (var prov in proveedores)
+                        {
+                            <tr>
+                                <td class="ps-4 font-monospace">#@prov.IdProveedor</td>
+                                <td class="fw-semibold">@prov.NombreEmpresa</td>
+                                <td>@(prov.Ruc ?? "Sin RUC")</td>
+                                <td class="text-center">@(prov.Productos?.Count ?? 0)</td>
+                                <td class="text-end pe-4">
+                                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalEditarProveedor" data-id="@prov.IdProveedor" data-nombre="@prov.NombreEmpresa" data-ruc="@(prov.Ruc ?? "")"><i class="bi bi-pencil"></i></button>
+                                    <form asp-action="EliminarProveedor" asp-controller="Inventario" method="post" class="d-inline form-confirm">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="idProveedor" value="@prov.IdProveedor" />
+                                        <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade admin-safe-modal" data-bs-backdrop="false" data-bs-keyboard="true" id="modalNuevoProducto" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content border-0 shadow rounded-4">
+        <form asp-controller="Inventario" asp-action="GuardarProducto" method="post">
+            @Html.AntiForgeryToken()
+            <div class="modal-header bg-light border-0"><h5 class="modal-title fw-bold">Registrar nuevo producto</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body"><partial name="_ProductoFormPartial" /></div>
+            <div class="modal-footer border-0"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary fw-bold">Guardar</button></div>
+        </form>
+    </div></div>
+</div>
+
+<div class="modal fade admin-safe-modal" data-bs-backdrop="false" data-bs-keyboard="true" id="modalEditarProducto" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content border-0 shadow rounded-4">
+        <form asp-controller="Inventario" asp-action="EditarProducto" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="idProducto" id="editProductoId" />
+            <div class="modal-header bg-light border-0"><h5 class="modal-title fw-bold">Actualizar información del producto</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body"><partial name="_ProductoFormPartial" /></div>
+            <div class="modal-footer border-0"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary fw-bold">Actualizar</button></div>
+        </form>
+    </div></div>
+</div>
+
+<div class="modal fade admin-safe-modal" data-bs-backdrop="false" data-bs-keyboard="true" id="modalMovimiento" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow rounded-4">
+        <form asp-controller="Inventario" asp-action="RegistrarMovimiento" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="idProducto" id="movIdProducto" />
+            <div class="modal-header bg-light border-0"><h5 class="modal-title fw-bold">Registrar operación de stock</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div class="alert alert-info border-0">Producto: <strong id="movNombreProducto"></strong><br />Stock actual: <strong id="movStockProducto"></strong></div>
+                <label class="form-label fw-semibold">Operación</label>
+                <select name="tipoMovimiento" class="form-select mb-3" required><option value="INGRESO">Ingreso de mercadería</option><option value="SALIDA">Salida de almacén</option></select>
+                <label class="form-label fw-semibold">Cantidad de unidades</label>
+                <input type="number" name="cantidad" class="form-control" min="1" required />
+            </div>
+            <div class="modal-footer border-0"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary fw-bold">Registrar</button></div>
+        </form>
+    </div></div>
+</div>
+
+<div class="modal fade admin-safe-modal" data-bs-backdrop="false" data-bs-keyboard="true" id="modalCategoria" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow rounded-4">
+        <form asp-controller="Inventario" asp-action="GuardarCategoria" method="post">@Html.AntiForgeryToken()<div class="modal-header bg-light border-0"><h5 class="modal-title fw-bold">Registrar categoría</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><label class="form-label fw-semibold">Nombre</label><input name="nombre" class="form-control" maxlength="100" required /></div><div class="modal-footer border-0"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary">Guardar</button></div></form>
+    </div></div>
+</div>
+
+<div class="modal fade admin-safe-modal" data-bs-backdrop="false" data-bs-keyboard="true" id="modalEditarCategoria" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow rounded-4">
+        <form asp-controller="Inventario" asp-action="EditarCategoria" method="post">@Html.AntiForgeryToken()<input type="hidden" name="idCategoria" id="editCategoriaId" /><div class="modal-header bg-light border-0"><h5 class="modal-title fw-bold">Editar categoría</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><label class="form-label fw-semibold">Nombre</label><input name="nombre" id="editCategoriaNombre" class="form-control" maxlength="100" required /></div><div class="modal-footer border-0"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary">Actualizar</button></div></form>
+    </div></div>
+</div>
+
+<div class="modal fade admin-safe-modal" data-bs-backdrop="false" data-bs-keyboard="true" id="modalProveedor" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow rounded-4">
+        <form asp-controller="Inventario" asp-action="GuardarProveedor" method="post">@Html.AntiForgeryToken()<div class="modal-header bg-light border-0"><h5 class="modal-title fw-bold">Registrar proveedor</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><label class="form-label fw-semibold">Empresa</label><input name="nombreEmpresa" class="form-control mb-3" maxlength="100" required /><label class="form-label fw-semibold">RUC</label><input name="ruc" class="form-control" maxlength="15" /></div><div class="modal-footer border-0"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary">Guardar</button></div></form>
+    </div></div>
+</div>
+
+<div class="modal fade admin-safe-modal" data-bs-backdrop="false" data-bs-keyboard="true" id="modalEditarProveedor" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow rounded-4">
+        <form asp-controller="Inventario" asp-action="EditarProveedor" method="post">@Html.AntiForgeryToken()<input type="hidden" name="idProveedor" id="editProveedorId" /><div class="modal-header bg-light border-0"><h5 class="modal-title fw-bold">Editar proveedor</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><label class="form-label fw-semibold">Empresa</label><input name="nombreEmpresa" id="editProveedorNombre" class="form-control mb-3" maxlength="100" required /><label class="form-label fw-semibold">RUC</label><input name="ruc" id="editProveedorRuc" class="form-control" maxlength="15" /></div><div class="modal-footer border-0"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary">Actualizar</button></div></form>
+    </div></div>
+</div>
+
+@section Scripts {
+<script>
+    document.querySelectorAll('.form-confirm').forEach(form => {
+        form.addEventListener('submit', e => {
+            if (!confirm('¿Confirmas esta operación?')) e.preventDefault();
+        });
+    });
+
+    document.getElementById('modalMovimiento')?.addEventListener('show.bs.modal', event => {
+        const b = event.relatedTarget;
+        document.getElementById('movIdProducto').value = b.getAttribute('data-id');
+        document.getElementById('movNombreProducto').innerText = b.getAttribute('data-nombre');
+        document.getElementById('movStockProducto').innerText = b.getAttribute('data-stock');
+    });
+
+    document.getElementById('modalEditarProducto')?.addEventListener('show.bs.modal', event => {
+        const b = event.relatedTarget;
+        const modal = event.currentTarget;
+        modal.querySelector('#editProductoId').value = b.getAttribute('data-id');
+        modal.querySelector('[name="nombre"]').value = b.getAttribute('data-nombre') || '';
+        modal.querySelector('[name="descripcion"]').value = b.getAttribute('data-descripcion') || '';
+        modal.querySelector('[name="precio"]').value = b.getAttribute('data-precio') || '0.00';
+        modal.querySelector('[name="idCategoria"]').value = b.getAttribute('data-categoria') || '';
+        modal.querySelector('[name="idProveedor"]').value = b.getAttribute('data-proveedor') || '';
+        const stockInput = modal.querySelector('[name="stock"]');
+        if (stockInput) stockInput.closest('.col-md-3').classList.add('d-none');
+    });
+
+    document.getElementById('modalCategoria')?.addEventListener('hidden.bs.modal', event => event.currentTarget.querySelector('form')?.reset());
+    document.getElementById('modalEditarCategoria')?.addEventListener('show.bs.modal', event => {
+        const b = event.relatedTarget;
+        document.getElementById('editCategoriaId').value = b.getAttribute('data-id');
+        document.getElementById('editCategoriaNombre').value = b.getAttribute('data-nombre') || '';
+    });
+    document.getElementById('modalEditarProveedor')?.addEventListener('show.bs.modal', event => {
+        const b = event.relatedTarget;
+        document.getElementById('editProveedorId').value = b.getAttribute('data-id');
+        document.getElementById('editProveedorNombre').value = b.getAttribute('data-nombre') || '';
+        document.getElementById('editProveedorRuc').value = b.getAttribute('data-ruc') || '';
+    });
+</script>
+}
+
+<style>
+    .kpi-card { border-radius: 18px; }
+    .font-monospace { font-family: Consolas, 'Liberation Mono', monospace; }
+</style>

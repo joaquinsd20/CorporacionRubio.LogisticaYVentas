@@ -1,0 +1,29 @@
+@{
+    ViewData["Title"] = "Acceso restringido";
+    var panelUrl = User.IsInRole("Administrador") ? Url.Action("Index", "Dashboard")
+        : User.IsInRole("JefeLogistica") ? Url.Action("Index", "PanelLogistico")
+        : User.IsInRole("Ventas") ? Url.Action("Index", "PanelVentas")
+        : User.IsInRole("Cliente") ? Url.Action("Index", "PortalCliente")
+        : Url.Action("Index", "Home");
+    var panelText = User.IsInRole("Administrador") ? "Panel administrativo"
+        : User.IsInRole("JefeLogistica") ? "Panel logístico"
+        : User.IsInRole("Ventas") ? "Panel comercial"
+        : User.IsInRole("Cliente") ? "Portal cliente"
+        : "Página oficial";
+}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4 text-center p-4 p-md-5 access-card">
+                <div class="display-5 text-warning mb-3"><i class="bi bi-shield-lock-fill"></i></div>
+                <h1 class="h3 fw-bold">Acceso restringido</h1>
+                <p class="text-muted mb-4">Tu cuenta está autenticada, pero este módulo pertenece a otro perfil. Te redirigimos al panel correspondiente a tu rol.</p>
+                <div class="d-flex justify-content-center gap-2 flex-wrap">
+                    <a class="btn btn-warning text-dark fw-bold rounded-pill px-4" href="@panelUrl"><i class="bi bi-arrow-right-circle me-1"></i> Ir a @panelText</a>
+                    <a class="btn btn-outline-secondary rounded-pill px-4" href="@Url.Action("Index", "Home")"><i class="bi bi-house-door me-1"></i> Página oficial</a>
+                    <a class="btn btn-outline-danger rounded-pill px-4" href="@Url.Action("LogoutGet", "Account")"><i class="bi bi-arrow-repeat me-1"></i> Cambiar de cuenta</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

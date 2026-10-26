@@ -1,0 +1,42 @@
+SEGMENTACIÓN PROFESIONAL DEL SISTEMA - CORPORACIÓN RUBIO
+========================================================
+
+Se mantuvo una sola solución ASP.NET Core MVC para no duplicar autenticación, conexión a base de datos ni lógica de negocio. La separación se realizó por módulos funcionales dentro del mismo proyecto:
+
+1. Página pública comercial
+   - Controller: Controllers/Publico/HomeController.cs
+   - Vista: Views/Home/Index.cshtml
+   - Uso: web oficial, catálogo, cotización, contacto.
+
+2. Identidad y acceso
+   - Controller: Controllers/Identidad/AccountController.cs
+   - Vistas: Views/Account
+   - Uso: login, logout, registro, recuperación de contraseña, restablecimiento de administrador.
+
+3. Centro administrativo
+   - Controller: Controllers/AdministracionController.cs
+   - Vista: Views/Administracion/Index.cshtml
+   - Uso: punto de entrada exclusivo del administrador para separar operación, seguridad y portales por rol.
+
+4. Operación logística y ventas
+   - Controllers: Controllers/Operacion
+   - Incluye: Dashboard, Inventario y Pedidos.
+   - Uso: indicadores, productos, movimientos de stock y pedidos corporativos.
+
+5. Portales por rol
+   - Controllers: Controllers/Portales
+   - Incluye: PanelLogistico, PanelVentas y PortalCliente.
+   - Uso: cada rol ingresa a un panel propio después del login.
+
+6. Seguridad administrativa y auditoría
+   - Controllers: Controllers/SeguridadAdministrativa
+   - Incluye: SeguridadController y AuditoriaController.
+   - Uso: gestión de usuarios, roles, estado de cuentas, recuperación de claves, auditoría y trazabilidad.
+
+Redirección por roles:
+- Administrador: Centro administrativo.
+- JefeLogistica: Panel logístico.
+- Ventas: Panel comercial.
+- Cliente: Portal cliente.
+
+Esta organización permite sustentar que el sistema está separado funcionalmente sin crear un segundo proyecto, manteniendo una única base de datos, un único DbContext y la seguridad centralizada con ASP.NET Core Identity.

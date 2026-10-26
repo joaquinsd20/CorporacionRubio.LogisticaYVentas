@@ -1,0 +1,239 @@
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@{
+    var sessionUserName = HttpContextAccessor.HttpContext?.Session.GetString("UserName");
+    var sessionRole = HttpContextAccessor.HttpContext?.Session.GetString("UserRol");
+    var identityName = User?.Identity?.IsAuthenticated == true ? User.Identity.Name : null;
+    var userName = !string.IsNullOrEmpty(sessionUserName) ? sessionUserName : identityName;
+    var isLogged = User?.Identity?.IsAuthenticated == true || !string.IsNullOrEmpty(userName);
+    var isAdmin = User?.IsInRole("Administrador") == true;
+    var isLogistica = User?.IsInRole("JefeLogistica") == true;
+    var isVentas = User?.IsInRole("Ventas") == true;
+    var isCliente = User?.IsInRole("Cliente") == true;
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString()?.ToLowerInvariant();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString()?.ToLowerInvariant();
+    var isPresentationPage = currentController == "home" && currentAction == "index";
+    var showPublicChrome = !isLogged || isPresentationPage;
+    var shellClass = showPublicChrome ? "public-shell" : "admin-shell";
+    var mainClass = showPublicChrome ? "public-main flex-grow-1" : "admin-main flex-grow-1";
+    var roleLabel = isAdmin ? "Administrador" : isLogistica ? "Jefe de Logística" : isVentas ? "Asesor Ventas" : isCliente ? "Cliente" : (sessionRole ?? "Usuario");
+    var panelUrl = isAdmin ? Url.Action("Index", "Administracion") : isLogistica ? Url.Action("Index", "PanelLogistico") : isVentas ? Url.Action("Index", "PanelVentas") : isCliente ? Url.Action("Index", "PortalCliente") : Url.Action("Index", "Home");
+    var panelText = isAdmin ? "Centro administrativo" : isLogistica ? "Panel logístico" : isVentas ? "Panel comercial" : isCliente ? "Portal cliente" : "Mi panel";
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Corporación Rubio</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/CorporacionRubio.Web.styles.css" asp-append-version="true" />
+    <style>
+        .modal.admin-safe-modal { z-index: 30000 !important; background: rgba(15, 23, 42, .22) !important; pointer-events: auto !important; }
+        .modal.admin-safe-modal .modal-dialog { z-index: 30001 !important; pointer-events: auto !important; }
+        .modal.admin-safe-modal .modal-content { pointer-events: auto !important; border: 0 !important; border-radius: 22px !important; box-shadow: 0 30px 90px rgba(0,0,0,.30) !important; overflow: hidden !important; }
+        .modal.admin-safe-modal .modal-header { background: linear-gradient(135deg, #0f172a, #1e293b 65%, #b45309) !important; color: #fff !important; border: 0 !important; }
+        .modal.admin-safe-modal .modal-title { color: #fff !important; font-weight: 900 !important; }
+        .modal.admin-safe-modal .modal-header .text-muted, .modal.admin-safe-modal .modal-header small { color: rgba(255,255,255,.75) !important; }
+        .modal.admin-safe-modal .btn-close { filter: invert(1) grayscale(100%) !important; opacity: .9 !important; }
+        .modal.admin-safe-modal .modal-body { background: linear-gradient(180deg, #ffffff, #f8fafc) !important; }
+        .modal.admin-safe-modal .modal-footer { background: #f8fafc !important; border-top: 1px solid #e2e8f0 !important; }
+        .modal-backdrop { display: none !important; pointer-events: none !important; }
+        body.modal-open { overflow: auto !important; padding-right: 0 !important; }
+    </style>
+</head>
+<body class="@shellClass text-dark d-flex flex-column min-vh-100">
+    <header>
+        @if (showPublicChrome)
+        {
+            <div class="topbar py-2">
+                <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 small">
+                    <div class="d-flex flex-wrap justify-content-center gap-3">
+                        <span><i class="bi bi-telephone-fill me-1"></i> 915947514 / 958716171</span>
+                        <span><i class="bi bi-envelope-fill me-1"></i> ventas@corporacionrubio.com</span>
+                    </div>
+                    <div class="fw-bold"><i class="bi bi-truck me-1"></i> Envíos a todo el Perú</div>
+                </div>
+            </div>
+        }
+
+        <nav class="navbar navbar-expand-lg navbar-dark navbar-custom py-2 sticky-top">
+            <div class="container-fluid px-4">
+                <a class="navbar-brand fw-bold text-white d-flex align-items-center" href="@(showPublicChrome ? Url.Action("Index", "Home") : panelUrl)">
+                    <span class="brand-icon"><i class="bi bi-shield-fill-check"></i></span>
+                    <span>Corporación Rubio <span class="brand-subtitle">@(showPublicChrome ? "Seguridad Industrial" : roleLabel)</span></span>
+                </a>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="mainNavbar">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        @if (!showPublicChrome)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link nav-link-custom px-3 fw-medium" href="@panelUrl">
+                                    <i class="bi bi-grid-1x2-fill me-1 small"></i> @panelText
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link nav-link-custom px-3 fw-medium" href="@Url.Action("Index", "Home")">
+                                    <i class="bi bi-house-door-fill me-1 small"></i> Página oficial
+                                </a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link nav-link-custom dropdown-toggle px-3 fw-medium" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-folder-fill me-1 small"></i> Opciones
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-dark border-0 shadow-lg" aria-labelledby="navbarDropdown">
+                                    @if (isAdmin)
+                                    {
+                                        <li><a class="dropdown-item py-2" href="@Url.Action("Index", "Administracion")"><i class="bi bi-building-lock text-warning me-2"></i>Centro administrativo</a></li>
+                                        <li><hr class="dropdown-divider bg-secondary"></li>
+                                        <li><h6 class="dropdown-header text-warning">Operación logística y ventas</h6></li>
+                                        <li><a class="dropdown-item py-2" href="@Url.Action("Index", "Dashboard")"><i class="bi bi-speedometer2 text-warning me-2"></i>Indicadores generales</a></li>
+                                        <li><a class="dropdown-item py-2" href="@Url.Action("Index", "Inventario")"><i class="bi bi-box-seam text-info me-2"></i>Inventario y abastecimiento</a></li>
+                                        <li><a class="dropdown-item py-2" href="@Url.Action("Index", "Pedidos")"><i class="bi bi-cart-check text-success me-2"></i>Pedidos y ventas</a></li>
+                                        <li><hr class="dropdown-divider bg-secondary"></li>
+                                        <li><h6 class="dropdown-header text-warning">Seguridad y gobierno</h6></li>
+                                        <li><a class="dropdown-item py-2" href="@Url.Action("Index", "Seguridad")"><i class="bi bi-person-lock text-warning me-2"></i>Seguridad y accesos</a></li>
+                                        <li><a class="dropdown-item py-2" href="@Url.Action("Register", "Account")"><i class="bi bi-person-plus text-warning me-2"></i>Registrar usuario</a></li>
+                                        <li><a class="dropdown-item py-2" href="@Url.Action("Index", "Auditoria")"><i class="bi bi-shield-lock text-warning me-2"></i>Bitácora de control</a></li>
+                                        <li><hr class="dropdown-divider bg-secondary"></li>
+                                        <li><h6 class="dropdown-header text-warning">Vistas de supervisión</h6></li>
+                                        <li><a class="dropdown-item py-2" href="@Url.Action("Index", "PanelLogistico")"><i class="bi bi-truck text-info me-2"></i>Supervisar logística</a></li>
+                                        <li><a class="dropdown-item py-2" href="@Url.Action("Index", "PanelVentas")"><i class="bi bi-graph-up-arrow text-success me-2"></i>Supervisar ventas</a></li>
+                                        <li><a class="dropdown-item py-2" href="@Url.Action("Index", "PortalCliente")"><i class="bi bi-person-check text-warning me-2"></i>Supervisar portal cliente</a></li>
+                                    }
+                                    else if (isLogistica)
+                                    {
+                                        <li><a class="dropdown-item py-2" href="@Url.Action("Index", "PanelLogistico")"><i class="bi bi-truck text-info me-2"></i>Panel logístico</a></li>
+                                        <li><a class="dropdown-item py-2" href="@Url.Action("Index", "Inventario")"><i class="bi bi-box-seam text-info me-2"></i>Inventario</a></li>
+                                        <li><a class="dropdown-item py-2" href="@Url.Action("Index", "Pedidos")"><i class="bi bi-clipboard-check text-success me-2"></i>Pedidos por atender</a></li>
+                                        <li><a class="dropdown-item py-2" href="@Url.Action("Index", "Auditoria")"><i class="bi bi-shield-check text-warning me-2"></i>Trazabilidad operativa</a></li>
+                                    }
+                                    else if (isVentas)
+                                    {
+                                        <li><a class="dropdown-item py-2" href="@Url.Action("Index", "PanelVentas")"><i class="bi bi-graph-up-arrow text-success me-2"></i>Panel comercial</a></li>
+                                        <li><a class="dropdown-item py-2" href="@Url.Action("Index", "Pedidos")"><i class="bi bi-cart-plus text-success me-2"></i>Registrar ventas</a></li>
+                                        <li><a class="dropdown-item py-2" href="@Url.Action("Index", "Home")#catalogo"><i class="bi bi-grid text-info me-2"></i>Catálogo público</a></li>
+                                    }
+                                    else if (isCliente)
+                                    {
+                                        <li><a class="dropdown-item py-2" href="@Url.Action("Index", "PortalCliente")"><i class="bi bi-person-check text-warning me-2"></i>Portal cliente</a></li>
+                                        <li><a class="dropdown-item py-2" href="@Url.Action("Index", "Home")#catalogo"><i class="bi bi-grid text-info me-2"></i>Catálogo</a></li>
+                                        <li><a class="dropdown-item py-2" href="@Url.Action("Index", "PortalCliente")#solicitud"><i class="bi bi-bag-plus text-success me-2"></i>Registrar compra</a></li>
+                                    }
+                                </ul>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item"><a class="nav-link nav-link-custom px-3 fw-medium" href="@Url.Action("Index", "Home")#inicio">Inicio</a></li>
+                            <li class="nav-item"><a class="nav-link nav-link-custom px-3 fw-medium" href="@Url.Action("Index", "Home")#nosotros">Nosotros</a></li>
+                            <li class="nav-item"><a class="nav-link nav-link-custom px-3 fw-medium" href="@Url.Action("Index", "Home")#catalogo">Catálogo</a></li>
+                            <li class="nav-item"><a class="nav-link nav-link-custom px-3 fw-medium" href="@Url.Action("Index", "Home")#ventas">Comprar</a></li>
+                            <li class="nav-item"><a class="nav-link nav-link-custom px-3 fw-medium" href="@Url.Action("Index", "Home")#contacto">Contacto</a></li>
+                        }
+                    </ul>
+
+                    <div class="d-flex align-items-center gap-2">
+                        @if (isLogged && showPublicChrome)
+                        {
+                            <a class="btn btn-warning btn-sm rounded-pill px-3 fw-bold text-dark" href="@panelUrl">
+                                <i class="bi bi-speedometer2 me-1"></i> @panelText
+                            </a>
+                            <a class="btn btn-outline-light btn-sm px-3 fw-semibold rounded-pill" href="@Url.Action("LogoutGet", "Account")">
+                                <i class="bi bi-power me-1"></i> Salir
+                            </a>
+                        }
+                        else if (isLogged)
+                        {
+                            <span class="navbar-text user-badge px-3 py-1 rounded-pill small fw-medium">
+                                <i class="bi bi-person-fill text-warning me-1"></i>
+                                @roleLabel
+                            </span>
+                            <a class="btn btn-sm btn-outline-danger px-3 fw-semibold rounded-pill" href="@Url.Action("LogoutGet", "Account")">
+                                <i class="bi bi-power me-1"></i> Salir
+                            </a>
+                        }
+                        else
+                        {
+                            <a class="btn btn-outline-light btn-sm rounded-pill px-3" href="https://wa.me/51915947514?text=Hola%20Corporaci%C3%B3n%20Rubio%2C%20quiero%20cotizar" target="_blank" rel="noopener">
+                                <i class="bi bi-whatsapp me-1"></i> WhatsApp
+                            </a>
+                            <a class="btn btn-warning btn-sm rounded-pill px-3 fw-bold text-dark" href="@Url.Action("Acceso", "Account")">
+                                <i class="bi bi-lock-fill me-1"></i> Ingresar
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main role="main" class="@mainClass">
+        <div class="container py-4">
+            @RenderBody()
+        </div>
+    </main>
+
+    @if (!showPublicChrome)
+    {
+        <footer class="admin-footer mt-auto py-3 small">
+            <div class="container-fluid px-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 text-center text-md-start">
+                <span><i class="bi bi-shield-check me-1"></i> Corporación Rubio · @panelText</span>
+                <span class="text-white-50">Acceso autenticado con ASP.NET Core Identity y autorización por roles</span>
+            </div>
+        </footer>
+    }
+    else
+    {
+        <footer class="site-footer mt-auto">
+            <div class="container py-5">
+                <div class="row g-4 align-items-start">
+                    <div class="col-lg-5">
+                        <div class="footer-brand mb-3"><span class="brand-icon me-2"><i class="bi bi-shield-fill-check"></i></span><span>Corporación Rubio</span></div>
+                        <p class="mb-3 text-white-70">Proveedor de equipos de protección personal, herramientas, señalización y soluciones de seguridad industrial para empresas, obras y minería.</p>
+                        <div class="d-flex flex-wrap gap-2"><span class="footer-pill"><i class="bi bi-truck me-1"></i> Envíos nacionales</span><span class="footer-pill"><i class="bi bi-headset me-1"></i> Atención comercial</span></div>
+                    </div>
+                    <div class="col-sm-6 col-lg-3">
+                        <h6 class="footer-title">Líneas comerciales</h6>
+                        <a href="@Url.Action("Index", "Home")#catalogo">EPP y seguridad industrial</a>
+                        <a href="@Url.Action("Index", "Home")#catalogo">Herramientas y accesorios</a>
+                        <a href="@Url.Action("Index", "Home")#catalogo">Minería y señalización</a>
+                    </div>
+                    <div class="col-sm-6 col-lg-2">
+                        <h6 class="footer-title">Contacto</h6>
+                        <a href="tel:+51915947514">915947514</a>
+                        <a href="tel:+51958716171">958716171</a>
+                        <a href="mailto:ventas@corporacionrubio.com">ventas@corporacionrubio.com</a>
+                    </div>
+                    <div class="col-lg-2">
+                        <h6 class="footer-title">Acceso interno</h6>
+                        @if (isLogged)
+                        {
+                            <a class="btn btn-warning rounded-pill fw-bold text-dark w-100" href="@panelUrl"><i class="bi bi-speedometer2 me-1"></i> @panelText</a>
+                        }
+                        else
+                        {
+                            <a class="btn btn-warning rounded-pill fw-bold text-dark w-100" href="@Url.Action("Acceso", "Account")"><i class="bi bi-lock-fill me-1"></i> Iniciar sesión</a>
+                        }
+                    </div>
+                </div>
+                <div class="footer-bottom mt-4 pt-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+                    <span>&copy; 2026 Corporación Rubio. Seguridad industrial y ventas corporativas.</span>
+                    <span>Web comercial + paneles por rol MVC</span>
+                </div>
+            </div>
+        </footer>
+    }
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

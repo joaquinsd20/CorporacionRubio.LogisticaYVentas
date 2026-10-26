@@ -1,0 +1,99 @@
+@model CorporacionRubio.Web.Models.RegistroViewModel
+@{
+    ViewData["Title"] = "Registro de usuarios";
+}
+
+<div class="container-fluid px-4 mt-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <nav aria-label="breadcrumb"><ol class="breadcrumb mb-1"><li class="breadcrumb-item"><a href="@Url.Action("Index", "Dashboard")" class="text-decoration-none text-muted small">Panel administrativo</a></li><li class="breadcrumb-item active fw-semibold small">Seguridad</li></ol></nav>
+            <h1 class="h4 fw-bold text-dark m-0"><i class="bi bi-person-plus-fill text-warning me-2"></i> Registro de usuarios internos</h1>
+            <p class="text-muted small mb-0">Alta de cuentas con ASP.NET Core Identity, contraseña cifrada y asignación de roles.</p>
+        </div>
+        <a class="btn btn-outline-secondary rounded-3 fw-semibold" href="@Url.Action("Index", "Dashboard")"><i class="bi bi-arrow-left me-1"></i> Volver al panel</a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-white py-3"><strong><i class="bi bi-shield-lock text-warning me-2"></i>Datos de acceso y perfil</strong></div>
+                <div class="card-body p-4">
+                    @if (TempData["Mensaje"] != null)
+                    {
+                        <div class="alert alert-success rounded-3 border-0">@TempData["Mensaje"]</div>
+                    }
+                    <form asp-action="Register" method="post" class="row g-3">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
+                        <div class="col-md-6">
+                            <label asp-for="Nombres" class="form-label fw-semibold">Nombres</label>
+                            <input asp-for="Nombres" class="form-control" placeholder="Nombres del colaborador" />
+                            <span asp-validation-for="Nombres" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Apellidos" class="form-label fw-semibold">Apellidos</label>
+                            <input asp-for="Apellidos" class="form-control" placeholder="Apellidos del colaborador" />
+                            <span asp-validation-for="Apellidos" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-8">
+                            <label asp-for="Email" class="form-label fw-semibold">Correo</label>
+                            <input asp-for="Email" class="form-control" placeholder="usuario@corporacionrubio.com" />
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Rol" class="form-label fw-semibold">Rol de acceso</label>
+                            <select asp-for="Rol" class="form-select">
+                                <option value="Administrador">Administrador</option>
+                                <option value="JefeLogistica">Jefe de logística</option>
+                                <option value="Ventas">Ventas</option>
+                                <option value="Cliente">Cliente</option>
+                            </select>
+                            <span asp-validation-for="Rol" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Cargo" class="form-label fw-semibold">Cargo</label>
+                            <input asp-for="Cargo" class="form-control" placeholder="Ej. Supervisor de almacén" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Area" class="form-label fw-semibold">Área</label>
+                            <input asp-for="Area" class="form-control" placeholder="Ej. Logística" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Password" class="form-label fw-semibold">Contraseña</label>
+                            <input asp-for="Password" class="form-control" placeholder="Mínimo 6 caracteres" />
+                            <span asp-validation-for="Password" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="ConfirmPassword" class="form-label fw-semibold">Confirmar contraseña</label>
+                            <input asp-for="ConfirmPassword" class="form-control" />
+                            <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                        </div>
+                        <div class="col-12 d-flex justify-content-end gap-2 pt-2">
+                            <a class="btn btn-light border fw-semibold" href="@Url.Action("Index", "Dashboard")">Cancelar</a>
+                            <button class="btn btn-warning text-dark fw-bold" type="submit"><i class="bi bi-person-check me-1"></i> Crear usuario</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body p-4">
+                    <span class="section-kicker">Seguridad aplicada</span>
+                    <h5 class="fw-bold">Autenticación y autorización por roles</h5>
+                    <p class="text-muted small">Las contraseñas se almacenan con PasswordHash de Identity. El acceso al dashboard se controla mediante cookies seguras y política de roles.</p>
+                    <ul class="list-unstyled small text-muted mb-0">
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> UserManager para crear usuarios.</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> SignInManager para login/logout.</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> RoleManager para perfiles de acceso.</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i> Rutas protegidas con [Authorize].</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

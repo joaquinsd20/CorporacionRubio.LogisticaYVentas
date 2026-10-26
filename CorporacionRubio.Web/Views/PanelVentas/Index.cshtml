@@ -1,0 +1,178 @@
+@model CorporacionRubio.Web.Models.PanelVentasViewModel
+@{
+    ViewData["Title"] = "Panel comercial";
+    var solicitudes = Model.Pedidos.Pedidos
+        .Where(p => new[] { "Pago por validar", "Solicitud recibida", "En revisión comercial", "Pendiente", "Disponibilidad validada - pago por validar", "Disponibilidad validada - condición por aprobar", "Disponibilidad validada - crédito por aprobar" }.Contains(p.Estado ?? ""))
+        .OrderBy(p => p.FechaPedido)
+        .Take(10)
+        .ToList();
+    var aprobados = Model.Pedidos.Pedidos
+        .Where(p => new[] { "Aprobado por ventas", "Preparación logística", "Despachado", "Entregado" }.Contains(p.Estado ?? ""))
+        .OrderByDescending(p => p.FechaPedido)
+        .Take(8)
+        .ToList();
+    var productos = Model.Pedidos.Productos.Take(8).ToList();
+    var pendientes = solicitudes.Count;
+    var pagosPorValidar = solicitudes.Count(p => (p.PagoPedido?.EstadoPago ?? "").Contains("validación") || (p.Estado ?? "").Contains("pago por validar"));
+    var stockValidado = solicitudes.Count(p => (p.Estado ?? "").StartsWith("Disponibilidad validada"));
+}
+
+<div class="role-panel px-2 px-lg-4 py-3 commercial-panel">
+    <section class="role-hero role-hero-ventas rounded-5 shadow-sm mb-4">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-8">
+                <span class="role-eyebrow"><i class="bi bi-graph-up-arrow me-2"></i>Gestión comercial y validación de pagos</span>
+                <h1>Valida disponibilidad, condiciones de pago y deriva órdenes a logística</h1>
+                <p>Bienvenido, <strong>@ViewBag.UserName</strong>. Este panel concentra las compras registradas por clientes. El stock ya fue verificado por el sistema al registrar la solicitud; Ventas valida la condición de pago, aprueba la orden y recién la deriva a logística.</p>
+                <div class="d-flex flex-wrap gap-2 mt-3">
+                    <a class="btn btn-success rounded-pill fw-bold px-4" href="@Url.Action("Index", "Pedidos")"><i class="bi bi-cart-plus me-1"></i> Registrar venta interna</a>
+                    <a class="btn btn-outline-dark rounded-pill fw-bold px-4" href="@Url.Action("Index", "Home")#catalogo"><i class="bi bi-grid me-1"></i> Catálogo publicado</a>
+                    <a class="btn btn-outline-secondary rounded-pill fw-bold px-4" href="@Url.Action("Index", "Home")"><i class="bi bi-house-door me-1"></i> Página oficial</a>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="role-status-card payment-status-card">
+                    <span>Compras pendientes</span>
+                    <strong>@pendientes por revisar</strong>
+                    <small>@pagosPorValidar con pago declarado. La aprobación confirma la condición de pago, descuenta stock y habilita logística.</small>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="alert alert-success rounded-4 shadow-sm"><i class="bi bi-check-circle me-2"></i>@TempData["Mensaje"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger rounded-4 shadow-sm"><i class="bi bi-exclamation-triangle me-2"></i>@TempData["Error"]</div>
+    }
+
+    <section class="row g-3 mb-4">
+        <div class="col-6 col-xl-3"><div class="metric-card h-100 metric-red"><div class="metric-icon"><i class="bi bi-inbox"></i></div><span>Órdenes por revisar</span><strong>@pendientes</strong><small>Registradas desde portal cliente</small></div></div>
+        <div class="col-6 col-xl-3"><div class="metric-card h-100 metric-green"><div class="metric-icon"><i class="bi bi-check2-square"></i></div><span>Stock verificado</span><strong>@stockValidado</strong><small>Disponibilidad validada por sistema</small></div></div>
+        <div class="col-6 col-xl-3"><div class="metric-card h-100 metric-gold"><div class="metric-icon"><i class="bi bi-cash-coin"></i></div><span>Ventas aprobadas</span><strong>S/ @Model.Resumen.TotalVentas.ToString("N2")</strong><small>Importe histórico</small></div></div>
+        <div class="col-6 col-xl-3"><div class="metric-card h-100 metric-blue"><div class="metric-icon"><i class="bi bi-box-seam"></i></div><span>Catálogo activo</span><strong>@Model.Pedidos.Productos.Count</strong><small>Productos con stock</small></div></div>
+    </section>
+
+    <section class="row g-4">
+        <div class="col-xl-8">
+            <div class="data-panel h-100">
+                <div class="data-panel-header"><div><span>Bandeja de validación</span><h5>Órdenes web con stock validado y condición de pago pendiente</h5></div><i class="bi bi-clipboard2-check"></i></div>
+                <div class="table-responsive">
+                    <table class="table admin-table align-middle mb-0">
+                        <thead><tr><th>Orden</th><th>Cliente</th><th>Detalle</th><th>Condición de pago</th><th>Stock</th><th>Total</th><th>Acción</th></tr></thead>
+                        <tbody>
+                        @if (solicitudes.Any())
+                        {
+                            foreach (var p in solicitudes)
+                            {
+                                var total = p.DetallesPedido?.Sum(d => d.Subtotal ?? 0m) ?? 0m;
+                                var detallesPedido = p.DetallesPedido;
+                                var detalle = detallesPedido == null ? "Sin detalle" : string.Join(", ", detallesPedido.Select(d => $"{d.Producto?.Nombre ?? "Producto"} x{d.Cantidad}"));
+                                var pago = p.PagoPedido;
+                                var stockOk = detallesPedido != null && detallesPedido.All(d => (d.Producto?.StockActual ?? 0) >= d.Cantidad);
+                                <tr>
+                                    <td><strong>#@p.IdPedido</strong><br><span class="badge-soft-warning">@(p.Estado ?? "Solicitud recibida")</span><small class="d-block text-muted">@p.FechaPedido.ToString("dd/MM/yyyy HH:mm")</small></td>
+                                    <td>@(p.Usuario?.Nombre ?? "Cliente corporativo")</td>
+                                    <td><small>@detalle</small></td>
+                                    <td>
+                                        @if (pago != null)
+                                        {
+                                            <div class="payment-mini"><strong>@pago.MetodoPago</strong><small>Código: @pago.ReferenciaOperacion</small><span class="badge-soft-info">@pago.EstadoPago</span></div>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge-soft-warning">Sin condición registrada</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (stockOk)
+                                        {
+                                            <span class="badge-soft-success"><i class="bi bi-check2-circle me-1"></i>Disponible</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge-soft-danger"><i class="bi bi-exclamation-octagon me-1"></i>Revisar</span>
+                                        }
+                                    </td>
+                                    <td><strong>S/ @total.ToString("N2")</strong></td>
+                                    <td>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            <form asp-action="AprobarPedido" method="post" class="d-inline validate-payment-form">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="idPedido" value="@p.IdPedido" />
+                                                <button class="btn btn-sm btn-success rounded-pill fw-bold" type="submit"><i class="bi bi-check2-circle"></i> Aprobar y derivar</button>
+                                            </form>
+                                            <form asp-action="RechazarPedido" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="idPedido" value="@p.IdPedido" />
+                                                <input type="hidden" name="motivo" value="Pago o condición comercial observada" />
+                                                <button class="btn btn-sm btn-outline-danger rounded-pill fw-bold" type="submit"><i class="bi bi-x-lg"></i> Observar</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="7"><div class="empty-state py-4"><i class="bi bi-check-circle"></i><strong>Sin órdenes pendientes</strong><span>Las nuevas compras aparecerán aquí con stock validado, código de operación y condición de pago por aprobar.</span></div></td></tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4">
+            <div class="data-panel h-100">
+                <div class="data-panel-header"><div><span>Catálogo operativo</span><h5>Productos disponibles para venta</h5></div><i class="bi bi-tags"></i></div>
+                <div class="data-panel-body p-0">
+                    @foreach (var p in productos)
+                    {
+                        <div class="data-list-row">
+                            <div><strong>@p.Nombre</strong><small>@(p.Categoria?.Nombre ?? "Sin categoría") · Stock: @(p.StockActual ?? 0)</small></div>
+                            <span class="badge-soft-success">S/ @((p.PrecioUnitario ?? 0m).ToString("N2"))</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="data-panel mt-4">
+        <div class="data-panel-header"><div><span>Seguimiento comercial</span><h5>Pedidos aprobados y avance operativo</h5></div><i class="bi bi-truck"></i></div>
+        <div class="table-responsive">
+            <table class="table admin-table align-middle mb-0">
+                <thead><tr><th>Pedido</th><th>Cliente</th><th>Pago</th><th>Estado operativo</th><th>Total</th><th>Fecha</th></tr></thead>
+                <tbody>
+                @foreach (var p in aprobados)
+                {
+                    var total = p.DetallesPedido?.Sum(d => d.Subtotal ?? 0m) ?? 0m;
+                    <tr>
+                        <td><strong>#@p.IdPedido</strong></td>
+                        <td>@(p.Usuario?.Nombre ?? "Cliente corporativo")</td>
+                        <td><span class="badge-soft-success">@(p.PagoPedido?.EstadoPago ?? "Venta interna")</span></td>
+                        <td><span class="badge-soft-info">@(p.Estado ?? "Aprobado por ventas")</span></td>
+                        <td>S/ @total.ToString("N2")</td>
+                        <td>@p.FechaPedido.ToString("dd/MM/yyyy")</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+<script>
+    document.querySelectorAll('.validate-payment-form').forEach(form => {
+        form.addEventListener('submit', e => {
+            if (!confirm('¿Confirmas que la condición de pago fue validada correctamente y que la orden puede derivarse a logística para preparación?')) {
+                e.preventDefault();
+            }
+        });
+    });
+</script>
+}

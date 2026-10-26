@@ -1,0 +1,329 @@
+@model CorporacionRubio.Business.Dto.DashboardResumenDto
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@{
+    ViewData["Title"] = "Panel de Gestión";
+    var userName = HttpContextAccessor.HttpContext?.Session.GetString("UserName") ?? "Usuario";
+    var movimientos = Model?.MovimientosRecientes ?? new List<MovimientoInventario>();
+    var pedidos = Model?.PedidosRecientes ?? new List<Pedido>();
+    var criticos = Model?.ProductosCriticos ?? new List<Producto>();
+    var stockCritico = Model?.ProductosStockCritico ?? 0;
+    var estadoInventario = stockCritico > 0 ? "Requiere atención" : "Operación estable";
+    var estadoClase = stockCritico > 0 ? "status-warning" : "status-ok";
+
+    string MovimientoTexto(string? tipo) => string.Equals(tipo, "INGRESO", StringComparison.OrdinalIgnoreCase) ? "Ingreso de stock" : "Salida de stock";
+    string MovimientoClase(string? tipo) => string.Equals(tipo, "INGRESO", StringComparison.OrdinalIgnoreCase) ? "badge-soft-success" : "badge-soft-danger";
+}
+
+<div class="admin-dashboard px-2 px-lg-4 py-3">
+    <section class="dash-hero rounded-5 shadow-lg overflow-hidden mb-4">
+        <div class="dash-hero-content">
+            <div class="row align-items-center g-4">
+                <div class="col-lg-8 text-white">
+                    <span class="dash-eyebrow"><i class="bi bi-speedometer2 me-2"></i>Tablero ejecutivo del administrador</span>
+                    <h1 class="display-6 fw-black mb-3">Dashboard corporativo de operación</h1>
+                    <p class="dash-subtitle mb-4">
+                        Bienvenido, <strong>@userName</strong>. Supervisa en una sola vista el inventario, pedidos, ventas, alertas de stock y trazabilidad interna. Este panel resume la operación; las acciones detalladas se realizan en los módulos especializados.
+                    </p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-warning btn-lg rounded-pill fw-bold text-dark px-4" href="@Url.Action("Index", "Inventario")">
+                            <i class="bi bi-box-seam me-2"></i>Inventario
+                        </a>
+                        <a class="btn btn-light btn-lg rounded-pill fw-bold px-4" href="@Url.Action("Index", "Pedidos")">
+                            <i class="bi bi-cart-plus me-2"></i>Pedidos
+                        </a>
+                        <a class="btn btn-outline-light btn-lg rounded-pill fw-bold px-4" href="@Url.Action("Index", "Auditoria")">
+                            <i class="bi bi-shield-check me-2"></i>Auditoría
+                        </a>
+                        <a class="btn btn-outline-secondary btn-lg rounded-pill fw-bold px-4" href="@Url.Action("Index", "Home")">
+                            <i class="bi bi-house-door me-2"></i>Página oficial
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="dash-health-card">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <span class="small text-uppercase fw-bold text-muted">Estado general</span>
+                            <span class="status-pill @estadoClase"><i class="bi bi-circle-fill me-1"></i>@estadoInventario</span>
+                        </div>
+                        <div class="dash-health-row">
+                            <span>Stock total disponible</span>
+                            <strong>@((Model?.StockTotal ?? 0).ToString("N0"))</strong>
+                        </div>
+                        <div class="dash-health-row">
+                            <span>Valor estimado de inventario</span>
+                            <strong>S/ @((Model?.ValorInventario ?? 0m).ToString("N2"))</strong>
+                        </div>
+                        <div class="dash-health-row border-0 pb-0">
+                            <span>Productos en alerta</span>
+                            <strong class="@(stockCritico > 0 ? "text-danger" : "text-success")">@stockCritico</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="row g-3 mb-4">
+        <div class="col-6 col-xl-3">
+            <div class="metric-card metric-blue h-100">
+                <div class="metric-icon"><i class="bi bi-box-seam"></i></div>
+                <span>Productos activos</span>
+                <strong>@(Model?.TotalProductos ?? 0)</strong>
+                <small>Catálogo operativo</small>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="metric-card metric-green h-100">
+                <div class="metric-icon"><i class="bi bi-receipt-cutoff"></i></div>
+                <span>Pedidos gestionados</span>
+                <strong>@(Model?.TotalPedidos ?? 0)</strong>
+                <small>Ventas registradas</small>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="metric-card metric-gold h-100">
+                <div class="metric-icon"><i class="bi bi-cash-coin"></i></div>
+                <span>Ventas acumuladas</span>
+                <strong>S/ @((Model?.TotalVentas ?? 0m).ToString("N2"))</strong>
+                <small>Importe de pedidos</small>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="metric-card metric-red h-100">
+                <div class="metric-icon"><i class="bi bi-exclamation-triangle"></i></div>
+                <span>Stock crítico</span>
+                <strong>@stockCritico</strong>
+                <small>Productos por revisar</small>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="metric-card h-100">
+                <div class="metric-icon"><i class="bi bi-grid"></i></div>
+                <span>Categorías</span>
+                <strong>@(Model?.TotalCategorias ?? 0)</strong>
+                <small>Líneas comerciales</small>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="metric-card h-100">
+                <div class="metric-icon"><i class="bi bi-building-check"></i></div>
+                <span>Proveedores</span>
+                <strong>@(Model?.TotalProveedores ?? 0)</strong>
+                <small>Aliados registrados</small>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="metric-card h-100">
+                <div class="metric-icon"><i class="bi bi-arrow-left-right"></i></div>
+                <span>Movimientos</span>
+                <strong>@(Model?.TotalMovimientos ?? 0)</strong>
+                <small>Entradas y salidas</small>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="metric-card h-100">
+                <div class="metric-icon"><i class="bi bi-shield-lock"></i></div>
+                <span>Eventos de control</span>
+                <strong>@(Model?.TotalAuditorias ?? 0)</strong>
+                <small>Auditoría operativa</small>
+            </div>
+        </div>
+    </section>
+
+    <section class="ops-control-strip mb-4">
+        <div class="ops-control-header">
+            <div>
+                <span class="section-kicker mb-2">Flujo de trabajo</span>
+                <h2>Control administrativo sin mezclar roles</h2>
+                <p>El administrador supervisa el negocio completo, mientras ventas, logística y cliente operan desde vistas separadas.</p>
+            </div>
+            <a class="btn btn-outline-dark rounded-pill fw-bold" href="@Url.Action("Index", "Administracion")">
+                <i class="bi bi-building-lock me-1"></i> Centro administrativo
+            </a>
+        </div>
+        <div class="ops-flow-grid">
+            <a class="ops-flow-card" href="@Url.Action("Index", "PanelVentas")">
+                <span>01</span>
+                <strong>Ventas valida pago y aprueba</strong>
+                <small>Confirma la condición de pago, descuenta stock y deriva la orden a logística.</small>
+            </a>
+            <a class="ops-flow-card" href="@Url.Action("Index", "PanelLogistico")">
+                <span>02</span>
+                <strong>Logística prepara despacho</strong>
+                <small>Atiende únicamente órdenes aprobadas, prepara despacho y actualiza estados de entrega.</small>
+            </a>
+            <a class="ops-flow-card" href="@Url.Action("Index", "PortalCliente")">
+                <span>03</span>
+                <strong>Cliente compra y consulta</strong>
+                <small>Registra compras con stock validado, código automático y seguimiento del pedido.</small>
+            </a>
+            <a class="ops-flow-card" href="@Url.Action("Index", "Seguridad")">
+                <span>04</span>
+                <strong>Administrador gobierna accesos</strong>
+                <small>Controla usuarios, roles, contraseñas y auditoría.</small>
+            </a>
+        </div>
+    </section>
+
+    <section class="row g-4 mb-4">
+        <div class="col-lg-4">
+            <div class="module-card h-100">
+                <div class="module-top">
+                    <div class="module-icon module-blue"><i class="bi bi-boxes"></i></div>
+                    <span class="module-label">Logística</span>
+                </div>
+                <h5>Inventario y abastecimiento</h5>
+                <p>Administra productos, categorías, proveedores y movimientos de stock con validación automática de salidas.</p>
+                <a class="btn btn-primary w-100 rounded-pill fw-bold" href="@Url.Action("Index", "Inventario")">
+                    Abrir inventario <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="module-card h-100">
+                <div class="module-top">
+                    <div class="module-icon module-green"><i class="bi bi-cart-check"></i></div>
+                    <span class="module-label">Ventas B2B</span>
+                </div>
+                <h5>Pedidos corporativos</h5>
+                <p>Registra pedidos con múltiples productos, descuenta stock automáticamente y mantiene el historial de atención.</p>
+                <a class="btn btn-success w-100 rounded-pill fw-bold text-white" href="@Url.Action("Index", "Pedidos")">
+                    Abrir pedidos <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="module-card h-100">
+                <div class="module-top">
+                    <div class="module-icon module-gold"><i class="bi bi-shield-check"></i></div>
+                    <span class="module-label">Control interno</span>
+                </div>
+                <h5>Bitácora de actividad</h5>
+                <p>Consulta responsables, áreas afectadas, actualizaciones y registros generados por la operación del sistema.</p>
+                <a class="btn btn-outline-dark w-100 rounded-pill fw-bold" href="@Url.Action("Index", "Auditoria")">
+                    Revisar bitácora <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="module-card h-100">
+                <div class="module-top">
+                    <div class="module-icon module-gold"><i class="bi bi-person-lock"></i></div>
+                    <span class="module-label">Seguridad</span>
+                </div>
+                <h5>Usuarios, roles y recuperación</h5>
+                <p>Administra cuentas Identity, asigna roles, restablece contraseñas y desbloquea el acceso administrador.</p>
+                <a class="btn btn-warning w-100 rounded-pill fw-bold text-dark" href="@Url.Action("Index", "Seguridad")">
+                    Gestionar seguridad <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section class="row g-4 mb-5">
+        <div class="col-xl-4">
+            <div class="data-panel h-100">
+                <div class="data-panel-header">
+                    <div>
+                        <span>Alertas de inventario</span>
+                        <h5>Productos críticos</h5>
+                    </div>
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div class="data-panel-body p-0">
+                    @if (criticos.Any())
+                    {
+                        foreach (var p in criticos)
+                        {
+                            <div class="data-list-row">
+                                <div>
+                                    <strong>@p.Nombre</strong>
+                                    <small>@(p.Categoria?.Nombre ?? "Sin categoría")</small>
+                                </div>
+                                <span class="badge-soft-danger">@(p.StockActual ?? 0) unid.</span>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="empty-state">
+                            <i class="bi bi-check-circle"></i>
+                            <strong>Inventario estable</strong>
+                            <span>No existen productos con stock crítico.</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="data-panel h-100">
+                <div class="data-panel-header">
+                    <div>
+                        <span>Actividad logística</span>
+                        <h5>Movimientos recientes</h5>
+                    </div>
+                    <i class="bi bi-arrow-left-right"></i>
+                </div>
+                <div class="table-responsive">
+                    <table class="table admin-table compact align-middle mb-0">
+                        <tbody>
+                            @if (movimientos.Any())
+                            {
+                                foreach (var m in movimientos)
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong>@(m.Producto?.Nombre ?? $"Producto #{m.IdProducto}")</strong>
+                                            <small class="d-block text-muted">@MovimientoTexto(m.TipoMovimiento)</small>
+                                        </td>
+                                        <td><span class="@MovimientoClase(m.TipoMovimiento)">@m.Cantidad unid.</span></td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr><td class="text-muted p-4">No hay movimientos recientes.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="data-panel h-100">
+                <div class="data-panel-header">
+                    <div>
+                        <span>Ventas</span>
+                        <h5>Pedidos recientes</h5>
+                    </div>
+                    <i class="bi bi-receipt"></i>
+                </div>
+                <div class="table-responsive">
+                    <table class="table admin-table compact align-middle mb-0">
+                        <tbody>
+                            @if (pedidos.Any())
+                            {
+                                foreach (var p in pedidos)
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong>Pedido #@p.IdPedido</strong>
+                                            <small class="d-block text-muted">@(p.Usuario?.Nombre ?? $"Usuario #{p.IdUsuario}")</small>
+                                        </td>
+                                        <td class="text-end fw-black">S/ @p.Total.ToString("N2")</td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr><td class="text-muted p-4">No hay pedidos recientes.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>

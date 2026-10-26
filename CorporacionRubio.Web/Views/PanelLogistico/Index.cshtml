@@ -1,0 +1,143 @@
+@model CorporacionRubio.Web.Models.PanelLogisticoViewModel
+@{
+    ViewData["Title"] = "Panel logístico";
+    var productos = Model.Inventario.Productos;
+    var movimientos = Model.Inventario.MovimientosRecientes;
+    var criticos = productos.Where(p => (p.StockActual ?? 0) <= 10).OrderBy(p => p.StockActual ?? 0).Take(8).ToList();
+    var pedidosOperacion = Model.Pedidos.Pedidos
+        .Where(p => new[] { "Aprobado por ventas", "Preparación logística", "Despachado" }.Contains(p.Estado ?? ""))
+        .OrderBy(p => p.FechaPedido)
+        .Take(10)
+        .ToList();
+}
+
+<div class="role-panel px-2 px-lg-4 py-3 logistics-panel">
+    <section class="role-hero role-hero-logistica rounded-5 shadow-sm mb-4">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-8">
+                <span class="role-eyebrow"><i class="bi bi-truck me-2"></i>Operaciones logísticas</span>
+                <h1>Preparación, despacho y trazabilidad de pedidos aprobados</h1>
+                <p>Bienvenido, <strong>@ViewBag.UserName</strong>. Este panel recibe los pedidos que Ventas aprobó, controla la preparación física, el despacho y la entrega final al cliente.</p>
+                <div class="d-flex flex-wrap gap-2 mt-3">
+                    <a class="btn btn-primary rounded-pill fw-bold px-4" href="@Url.Action("Index", "Inventario")"><i class="bi bi-box-seam me-1"></i> Gestionar inventario</a>
+                    <a class="btn btn-outline-dark rounded-pill fw-bold px-4" href="#pedidos-operacion"><i class="bi bi-clipboard-check me-1"></i> Pedidos operativos</a>
+                    <a class="btn btn-outline-secondary rounded-pill fw-bold px-4" href="@Url.Action("Index", "Home")"><i class="bi bi-house-door me-1"></i> Página oficial</a>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="role-status-card">
+                    <span>Cola logística</span>
+                    <strong>@pedidosOperacion.Count pedidos</strong>
+                    <small>Pedidos aprobados, en preparación o despacho.</small>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="alert alert-success rounded-4 shadow-sm"><i class="bi bi-check-circle me-2"></i>@TempData["Mensaje"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger rounded-4 shadow-sm"><i class="bi bi-exclamation-triangle me-2"></i>@TempData["Error"]</div>
+    }
+
+    <section class="row g-3 mb-4">
+        <div class="col-6 col-xl-3"><div class="metric-card h-100"><div class="metric-icon"><i class="bi bi-boxes"></i></div><span>Productos controlados</span><strong>@Model.Resumen.TotalProductos</strong><small>Catálogo operativo</small></div></div>
+        <div class="col-6 col-xl-3"><div class="metric-card h-100 metric-blue"><div class="metric-icon"><i class="bi bi-arrow-left-right"></i></div><span>Movimientos</span><strong>@Model.Resumen.TotalMovimientos</strong><small>Entradas y salidas</small></div></div>
+        <div class="col-6 col-xl-3"><div class="metric-card h-100 metric-gold"><div class="metric-icon"><i class="bi bi-truck"></i></div><span>Pedidos operativos</span><strong>@pedidosOperacion.Count</strong><small>Por preparar o despachar</small></div></div>
+        <div class="col-6 col-xl-3"><div class="metric-card h-100 metric-red"><div class="metric-icon"><i class="bi bi-exclamation-triangle"></i></div><span>Alertas de stock</span><strong>@Model.Resumen.ProductosStockCritico</strong><small>Productos críticos</small></div></div>
+    </section>
+
+    <section class="data-panel mb-4" id="pedidos-operacion">
+        <div class="data-panel-header"><div><span>Flujo de atención</span><h5>Pedidos recibidos desde Ventas para preparación y despacho</h5></div><i class="bi bi-diagram-3"></i></div>
+        <div class="table-responsive">
+            <table class="table admin-table align-middle mb-0">
+                <thead><tr><th>Pedido</th><th>Cliente</th><th>Estado actual</th><th>Total</th><th>Siguiente acción</th></tr></thead>
+                <tbody>
+                @if (pedidosOperacion.Any())
+                {
+                    foreach (var p in pedidosOperacion)
+                    {
+                        var total = p.DetallesPedido?.Sum(d => d.Subtotal ?? 0m) ?? 0m;
+                        var estado = p.Estado ?? "Aprobado por ventas";
+                        var siguiente = estado == "Aprobado por ventas" ? "Preparación logística" : estado == "Preparación logística" ? "Despachado" : estado == "Despachado" ? "Entregado" : "";
+                        <tr>
+                            <td><strong>#@p.IdPedido</strong><br><small>@p.FechaPedido.ToString("dd/MM/yyyy HH:mm")</small></td>
+                            <td>@(p.Usuario?.Nombre ?? "Cliente corporativo")</td>
+                            <td><span class="badge-soft-info">@estado</span></td>
+                            <td><strong>S/ @total.ToString("N2")</strong></td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(siguiente))
+                                {
+                                    <form asp-action="CambiarEtapa" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="idPedido" value="@p.IdPedido" />
+                                        <input type="hidden" name="etapa" value="@siguiente" />
+                                        <button type="submit" class="btn btn-sm btn-primary rounded-pill fw-bold"><i class="bi bi-arrow-right-circle me-1"></i>@siguiente</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">Sin acción pendiente</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr><td colspan="5"><div class="empty-state py-4"><i class="bi bi-inbox"></i><strong>No hay pedidos en cola logística</strong><span>Cuando Ventas apruebe una solicitud, aparecerá en este flujo operativo.</span></div></td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="row g-4">
+        <div class="col-xl-5">
+            <div class="data-panel h-100">
+                <div class="data-panel-header"><div><span>Prioridad operativa</span><h5>Productos con bajo stock</h5></div><i class="bi bi-exclamation-diamond"></i></div>
+                <div class="data-panel-body p-0">
+                    @if (criticos.Any())
+                    {
+                        foreach (var p in criticos)
+                        {
+                            <div class="data-list-row">
+                                <div><strong>@p.Nombre</strong><small>@(p.Categoria?.Nombre ?? "Sin categoría") · @(p.Proveedor?.NombreEmpresa ?? "Sin proveedor")</small></div>
+                                <span class="badge-soft-danger">@(p.StockActual ?? 0) unidades</span>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="empty-state"><i class="bi bi-check-circle"></i><strong>Sin alertas críticas</strong><span>El inventario se encuentra dentro de parámetros aceptables.</span></div>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-7">
+            <div class="data-panel h-100">
+                <div class="data-panel-header"><div><span>Trazabilidad</span><h5>Últimos movimientos de inventario</h5></div><i class="bi bi-clock-history"></i></div>
+                <div class="table-responsive">
+                    <table class="table admin-table align-middle mb-0">
+                        <thead><tr><th>Producto</th><th>Actividad</th><th>Cantidad</th><th>Fecha</th></tr></thead>
+                        <tbody>
+                        @foreach (var m in movimientos.Take(10))
+                        {
+                            var ingreso = string.Equals(m.TipoMovimiento, "INGRESO", StringComparison.OrdinalIgnoreCase);
+                            <tr>
+                                <td><strong>@(m.Producto?.Nombre ?? $"Producto #{m.IdProducto}")</strong></td>
+                                <td><span class="@(ingreso ? "badge-soft-success" : "badge-soft-danger")">@(ingreso ? "Ingreso de stock" : "Salida de stock")</span></td>
+                                <td>@m.Cantidad.ToString("N0")</td>
+                                <td>@m.FechaMovimiento.ToString("dd/MM/yyyy HH:mm")</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
